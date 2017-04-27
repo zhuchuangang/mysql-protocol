@@ -24,7 +24,12 @@ public class PacketTest {
         String username = "root";
         String password = "123456";
         String database="uaa";
-        String sql = "select * from users";
+//        String sql = "select * from users";
+//        String sql = "select * from test_integer";
+//        String sql = "select * from test_float";
+//        String sql = "select * from test_date";
+//        String sql = "select * from test_char";
+        String sql = "select * from test_blob";
 
         InetSocketAddress address = new InetSocketAddress(host, port);
         Socket socket = new Socket();

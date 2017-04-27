@@ -43,7 +43,7 @@ public class ColumnPacket extends MySQLPacket {
     //4              column length
     public int columnLength;
     //1              type
-    public byte type;
+    public int type;
     //2              flags
     public int flags;
     //1              decimals
@@ -71,7 +71,7 @@ public class ColumnPacket extends MySQLPacket {
         message.move(1);
         characterSet = message.readUB2();
         columnLength = message.readUB4();
-        type = message.read();
+        type = (message.read()& 0xff);
         flags = message.readUB2();
         decimals = message.read();
         message.move(2);

@@ -54,6 +54,21 @@ public class ResultSetPacket extends MySQLPacket {
                 rows.add(rsrp);
             }
         }
+
+
+//        buffer = buffer.slice();
+//        columnsEof = new EOFPacket();
+//        columnsEof.read(buffer);
+//
+//        buffer = buffer.slice();
+//        ResultSetRowPacket rsrp = new ResultSetRowPacket();
+//        rsrp.columnCount = columns.size();
+//        rsrp.read(buffer);
+//        rows.add(rsrp);
+//
+//        buffer = buffer.slice();
+//        rowsEof = new EOFPacket();
+//        rowsEof.read(buffer);
     }
 
     @Override
