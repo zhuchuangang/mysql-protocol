@@ -1,5 +1,6 @@
 package leader.us.mysql.protocol.packet.mutli;
 
+import leader.us.mysql.protocol.constants.ClientCapabilityFlags;
 import leader.us.mysql.protocol.packet.MySQLPacket;
 import leader.us.mysql.protocol.packet.OKPacket;
 
@@ -19,6 +20,7 @@ public class OkState implements MultiResultSetState {
     @Override
     public MySQLPacket read(ByteBuffer buffer) {
         OKPacket op = new OKPacket();
+        op.capabilities= ClientCapabilityFlags.getClientCapabilities();
         op.read(buffer);
         ByteBuffer bb = buffer.slice();
         if (bb.limit() <= 4) {
