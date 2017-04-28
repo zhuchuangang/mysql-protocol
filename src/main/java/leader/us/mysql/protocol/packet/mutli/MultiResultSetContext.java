@@ -3,11 +3,13 @@ package leader.us.mysql.protocol.packet.mutli;
 import leader.us.mysql.protocol.packet.MySQLPacket;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by zcg on 2017/4/27.
  */
-public class MultiResultSetContext implements MultiResultSetState {
+public class MultiResultSetContext {
 
     final ColumnsNumberState columnsNumberState;
     final EofState eofState;
@@ -29,8 +31,8 @@ public class MultiResultSetContext implements MultiResultSetState {
         errorState = new ErrorState(this);
     }
 
-    @Override
-    public MySQLPacket read(ByteBuffer buffer) {
+
+    public List<MySQLPacket> read(ByteBuffer buffer) {
         if (state == null) {
             if (buffer.limit() < 5) {
                 return null;
@@ -50,7 +52,15 @@ public class MultiResultSetContext implements MultiResultSetState {
                     state = columnsNumberState;
             }
         }
-        return state.read(buffer);
+        List<MySQLPacket> p = new ArrayList<>();
+        ByteBuffer bb = buffer;
+        for (; state != null; ) {
+            MySQLPacket msp=state.read(bb);
+            p.add(msp);
+            //System.out.println(msp);
+            bb = bb.slice();
+        }
+        return p;
     }
 
     public MultiResultSetState getState() {
@@ -69,7 +79,7 @@ public class MultiResultSetContext implements MultiResultSetState {
         this.columnsNumber = columnsNumber;
     }
 
-    public boolean isReadRow() {
+    public boolean getReadRow() {
         return readRow;
     }
 

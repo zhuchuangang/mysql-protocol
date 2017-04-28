@@ -137,6 +137,6 @@ public class HandshakePacket extends MySQLPacket{
                 ", authPluginDataPart2=" + Arrays.toString(authPluginDataPart2) +
                 ", authPluginName='" + authPluginName + '\'' +
                 ", capabilities=" + capabilities +
-                '}';
+                "}\n";
     }
 }

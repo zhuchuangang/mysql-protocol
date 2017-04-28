@@ -234,6 +234,6 @@ public class AuthPacket extends MySQLPacket {
                 ", authPluginName='" + authPluginName + '\'' +
                 ", keyValuesLength='" + keyValuesLength + '\'' +
                 ", values=" + values +
-                '}';
+                "}\r\n";
     }
 }

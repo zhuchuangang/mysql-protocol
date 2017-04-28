@@ -1,7 +1,5 @@
 package leader.us.mysql.protocol.constants;
 
-import leader.us.mysql.protocol.packet.MySQLPacket;
-
 /**
  * Created by zcg on 2017/4/4.
  */

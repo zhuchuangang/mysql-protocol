@@ -13,7 +13,7 @@ public class ResultSetRowPacket extends MySQLPacket {
 
     public List values = new ArrayList();
 
-    public int columnCount;
+    public long columnCount;
 
     @Override
     public void read(ByteBuffer buffer) {

@@ -60,6 +60,6 @@ public class EOFPacket extends MySQLPacket {
                 ", warnings=" + warnings +
                 ", statusFlags=" + statusFlags +
                 ", capabilities=" + capabilities +
-                '}';
+                "}\n";
     }
 }

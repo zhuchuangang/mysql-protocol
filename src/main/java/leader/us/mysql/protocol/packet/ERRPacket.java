@@ -73,6 +73,6 @@ public class ERRPacket extends MySQLPacket {
                 ", sqlState=" + Arrays.toString(sqlState) +
                 ", errorMessage='" + errorMessage + '\'' +
                 ", capabilities=" + capabilities +
-                '}';
+                "}\n";
     }
 }

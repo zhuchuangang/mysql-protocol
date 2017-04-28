@@ -1,7 +1,5 @@
 package leader.us.mysql.protocol.packet;
 
-import leader.us.mysql.protocol.constants.CapabilityFlags;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;

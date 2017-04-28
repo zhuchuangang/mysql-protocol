@@ -105,6 +105,6 @@ public class OKPacket extends MySQLPacket {
                 ", warnings=" + warnings +
                 ", info='" + info + '\'' +
                 ", sessionStateChanges='" + sessionStateChanges + '\'' +
-                '}';
+                "}\n";
     }
 }

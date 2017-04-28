@@ -40,6 +40,6 @@ public class ColumnsNumberPacket extends MySQLPacket {
                 "  columnsNumber=" + columnsNumber +
                 ", packetLength=" + packetLength +
                 ", packetSequenceId=" + packetSequenceId +
-                '}';
+                "}\n";
     }
 }
