@@ -31,9 +31,9 @@ public class EofState implements MultiResultSetState {
                 byte head = bb.get(4);
                 if (head == (byte) 0xff) {
                     context.setState(context.errorState);
-                }else if (head==(byte)0x00){
+                } else if (head == (byte) 0x00) {
                     context.setState(context.okState);
-                }else {
+                } else {
                     context.setState(context.columnsNumberState);
                 }
             }

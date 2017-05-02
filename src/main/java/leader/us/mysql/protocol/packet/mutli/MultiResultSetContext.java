@@ -55,7 +55,7 @@ public class MultiResultSetContext {
         List<MySQLPacket> p = new ArrayList<>();
         ByteBuffer bb = buffer;
         for (; state != null; ) {
-            MySQLPacket msp=state.read(bb);
+            MySQLPacket msp = state.read(bb);
             p.add(msp);
             //System.out.println(msp);
             bb = bb.slice();

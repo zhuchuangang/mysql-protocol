@@ -71,7 +71,7 @@ public class ColumnPacket extends MySQLPacket {
         message.move(1);
         characterSet = message.readUB2();
         columnLength = message.readUB4();
-        type = (message.read()& 0xff);
+        type = (message.read() & 0xff);
         flags = message.readUB2();
         decimals = message.read();
         message.move(2);

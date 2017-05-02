@@ -29,7 +29,7 @@ import java.util.Arrays;
  * string[NUL]    auth-plugin name
  * }
  */
-public class HandshakePacket extends MySQLPacket{
+public class HandshakePacket extends MySQLPacket {
     //https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::Handshake
     //  1 [0a] protocol version
     public int protocolVersion;

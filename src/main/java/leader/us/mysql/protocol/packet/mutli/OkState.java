@@ -20,7 +20,7 @@ public class OkState implements MultiResultSetState {
     @Override
     public MySQLPacket read(ByteBuffer buffer) {
         OKPacket op = new OKPacket();
-        op.capabilities= ClientCapabilityFlags.getClientCapabilities();
+        op.capabilities = ClientCapabilityFlags.getClientCapabilities();
         op.read(buffer);
         ByteBuffer bb = buffer.slice();
         if (bb.limit() <= 4) {

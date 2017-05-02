@@ -24,8 +24,8 @@ public class FieldState implements MultiResultSetState {
         MySQLMessage m = new MySQLMessage(temp);
         m.move(4);
         int position = temp.position();
-        byte head=m.read();
-        if (head==(byte)0xfe){
+        byte head = m.read();
+        if (head == (byte) 0xfe) {
             context.setReadRow(true);
             context.setState(context.eofState);
         }

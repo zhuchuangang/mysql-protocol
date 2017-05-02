@@ -16,7 +16,9 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * test 1:
@@ -104,6 +106,7 @@ public class PreparedStatementPacketTest {
         ByteBuffer apBuffer = ByteBuffer.allocate(ap.calcPacketSize() + 4);
         ap.write(apBuffer);
         out.write(apBuffer.array());
+        out.flush();
 
         data = new byte[1024];
         in.read(data);
@@ -115,6 +118,7 @@ public class PreparedStatementPacketTest {
             cp.put(CommandTypes.COM_STMT_PREPARE);
             cp.put(sql.getBytes());
             out.write(cp.array());
+            out.flush();
 
             data = new byte[1024];
             int readNumber = in.read(data);
@@ -124,6 +128,19 @@ public class PreparedStatementPacketTest {
             sp.read(psbb);
             System.out.println(sp);
 
+
+            StmtExecutePacket se = new StmtExecutePacket();
+            se.packetSequenceId=0;
+            se.statementId = sp.stmtPrepareOKPacket.statementId;
+            se.flags = 0;
+            se.paramCount = sp.stmtPrepareOKPacket.parametersNumber;
+            se.sendType = false;
+            se.params = Arrays.asList("1", "admin");
+            ByteBuffer sebb = ByteBuffer.allocate(se.calcPacketSize() + 4);
+            se.write(sebb);
+            data=sebb.array();
+            out.write(data);
+            out.flush();
         }
         if (data[4] == (byte) 0xff) {
             System.out.println("error");

@@ -44,7 +44,7 @@ public class ERRPacket extends MySQLPacket {
             sqlStateMarker = message.read();
             sqlState = message.readBytes(5);
         }
-        errorMessage=message.readString();
+        errorMessage = message.readString();
     }
 
     @Override
