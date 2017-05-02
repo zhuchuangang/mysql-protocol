@@ -130,7 +130,7 @@ public class PreparedStatementPacketTest {
 
 
             StmtExecutePacket se = new StmtExecutePacket();
-            se.packetSequenceId=0;
+            se.packetSequenceId = 0;
             se.statementId = sp.stmtPrepareOKPacket.statementId;
             se.flags = 0;
             se.paramCount = sp.stmtPrepareOKPacket.parametersNumber;
@@ -138,7 +138,7 @@ public class PreparedStatementPacketTest {
             se.params = Arrays.asList("1", "admin");
             ByteBuffer sebb = ByteBuffer.allocate(se.calcPacketSize() + 4);
             se.write(sebb);
-            data=sebb.array();
+            data = sebb.array();
             out.write(data);
             out.flush();
         }

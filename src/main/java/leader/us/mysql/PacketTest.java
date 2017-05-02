@@ -26,7 +26,7 @@ public class PacketTest {
         int port = 3306;
         String username = "root";
         String password = "123456";
-        String database="uaa";
+        String database = "uaa";
 //        String sql = "select * from users";
 //        String sql = "select * from test_integer";
 //        String sql = "select * from test_float";

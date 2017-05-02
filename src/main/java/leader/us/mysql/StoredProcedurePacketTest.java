@@ -118,7 +118,7 @@ public class StoredProcedurePacketTest {
 
         if (data[4] == 0x00) {
             for (String sql : sqls) {
-                System.out.println("exec "+sql);
+                System.out.println("exec " + sql);
                 ByteBuffer cp = ByteBuffer.allocate(sql.length() + 5);
                 BufferUtil.writeUB3(cp, sql.length());
                 cp.put((byte) 0);
@@ -145,8 +145,8 @@ public class StoredProcedurePacketTest {
                                     moreResults = true;
                                     System.out.println("more results");
                                 }
-                            }else {
-                                moreResults=false;
+                            } else {
+                                moreResults = false;
                                 System.out.println("no more results");
                             }
                         }
@@ -156,7 +156,7 @@ public class StoredProcedurePacketTest {
                         break;
                     }
                 }
-                System.out.println("================"+sql+"================");
+                System.out.println("================" + sql + "================");
             }
         }
         if (data[4] == (byte) 0xff) {
