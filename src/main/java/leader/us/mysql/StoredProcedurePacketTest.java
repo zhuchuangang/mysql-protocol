@@ -1,6 +1,5 @@
 package leader.us.mysql;
 
-import leader.us.mysql.protocol.constants.CapabilityFlags;
 import leader.us.mysql.protocol.constants.ClientCapabilityFlags;
 import leader.us.mysql.protocol.constants.CommandTypes;
 import leader.us.mysql.protocol.constants.StatusFlags;

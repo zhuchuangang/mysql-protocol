@@ -37,8 +37,9 @@ public class NioAcceptor extends Thread {
                 //随机生成reactors的下标
                 int index = ThreadLocalRandom.current().nextInt(reactors.length);
                 System.out.println(getName() + " thread choose no." + index + " reactor register channel");
+                FrontendConnection connection = new FrontendConnection(channel);
                 //调用reactor的registerClient方法，注册客户端连接
-                reactors[index].postRegister(channel);
+                reactors[index].postRegister(connection);
             } catch (IOException e) {
                 e.printStackTrace();
             }

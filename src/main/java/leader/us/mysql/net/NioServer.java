@@ -12,9 +12,11 @@ public class NioServer {
         try {
             NioReactor[] reactors = new NioReactor[Runtime.getRuntime().availableProcessors()];
             for (int i = 0; i < reactors.length; i++) {
-                reactors[i] = new NioReactor(executorService,i);
+                reactors[i] = new NioReactor(executorService, i);
                 reactors[i].start();
             }
+            NioConnector connector = new NioConnector("127.0.0.1", 3306, "uaa", reactors);
+            connector.start();
             NioAcceptor acceptor = new NioAcceptor(8888, reactors);
             acceptor.start();
         } catch (Exception e) {

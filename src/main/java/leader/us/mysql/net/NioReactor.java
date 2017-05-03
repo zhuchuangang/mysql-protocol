@@ -1,9 +1,11 @@
 package leader.us.mysql.net;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -13,25 +15,27 @@ import java.util.concurrent.ExecutorService;
  * reactor作为IO线程，业务处理的handler线程在线程池中执行
  */
 public class NioReactor extends Thread {
+
+    private static Logger logger = LogManager.getLogger(NioReactor.class);
     //所有的reactor的线程池为公用
     private ExecutorService executorService;
     //每个reactor都有各自的selector
     private Selector selector;
     //注册队列
-    private ConcurrentLinkedQueue<SocketChannel> registerQueue;
+    private ConcurrentLinkedQueue<NioConnection> registerQueue;
 
     public NioReactor(ExecutorService executorService, int index) throws IOException {
         this.executorService = executorService;
         this.selector = Selector.open();
         this.registerQueue = new ConcurrentLinkedQueue();
         setName("nio-reactor-" + index);
-        System.out.println(getName() + " create reactor thread:" + getName());
+        logger.info("{} create reactor thread:{}", getName(), getName());
     }
 
-    public void postRegister(SocketChannel channel) {
-        registerQueue.offer(channel);
+    public void postRegister(NioConnection connection) {
+        registerQueue.offer(connection);
         selector.wakeup();
-        System.out.println(getName() + " add the channel to register queue,and wakeup selector");
+        logger.info("{} add the channel to register queue,and wakeup selector", getName());
     }
 
 
@@ -67,15 +71,22 @@ public class NioReactor extends Thread {
 
     private void register() {
         if (registerQueue.isEmpty()) {
-            //System.out.println(getName() + " register queue is empty");
             return;
         }
-        SocketChannel c = null;
+        NioConnection c = null;
         while ((c = registerQueue.poll()) != null) {
-            System.out.println(getName() + " register queue poll " + c);
+            if (logger.isDebugEnabled()) {
+                logger.debug("{} register queue poll {}", getName(), c);
+            }
             try {
-                new TelnetHandler(selector,c);
-                System.out.println(getName() + " create nioHandler,and register channel to listen for read event");
+                if (c instanceof FrontendConnection) {
+                    new TelnetHandler(selector, c.getSocketChannel());
+                } else if (c instanceof BackendConnection) {
+                    new BackendHandler(selector, c.getSocketChannel());
+                }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("{} create nioHandler,and register channel to listen for read event", getName(), c);
+                }
             } catch (Exception e) {
 
             }

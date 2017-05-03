@@ -2,9 +2,10 @@ package leader.us.mysql;
 
 import leader.us.mysql.protocol.constants.ClientCapabilityFlags;
 import leader.us.mysql.protocol.constants.CommandTypes;
-import leader.us.mysql.protocol.constants.StatusFlags;
-import leader.us.mysql.protocol.packet.*;
-import leader.us.mysql.protocol.packet.mutli.MultiResultSetContext;
+import leader.us.mysql.protocol.packet.AuthPacket;
+import leader.us.mysql.protocol.packet.HandshakePacket;
+import leader.us.mysql.protocol.packet.StmtExecutePacket;
+import leader.us.mysql.protocol.packet.StmtPreparePacket;
 import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.SecurityUtil;
 
@@ -15,10 +16,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * test 1:

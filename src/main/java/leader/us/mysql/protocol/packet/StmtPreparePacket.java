@@ -1,8 +1,5 @@
 package leader.us.mysql.protocol.packet;
 
-import leader.us.mysql.protocol.support.BufferUtil;
-import leader.us.mysql.protocol.support.MySQLMessage;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;

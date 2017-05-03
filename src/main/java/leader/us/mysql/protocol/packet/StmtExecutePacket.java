@@ -2,11 +2,9 @@ package leader.us.mysql.protocol.packet;
 
 import leader.us.mysql.protocol.constants.CommandTypes;
 import leader.us.mysql.protocol.support.BufferUtil;
-import leader.us.mysql.protocol.support.MySQLMessage;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
 
 
 /**
