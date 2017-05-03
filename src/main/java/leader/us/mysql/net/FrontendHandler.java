@@ -1,5 +1,11 @@
 package leader.us.mysql.net;
 
+import leader.us.mysql.bufferpool.Chunk;
+import leader.us.mysql.bufferpool.DirectByteBufferPool;
+import leader.us.mysql.protocol.packet.HandshakePacket;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
@@ -8,13 +14,13 @@ import java.nio.channels.SocketChannel;
 /**
  * Created by zcg on 2017/3/25.
  */
-//TODO 是否可以继承Thread
-public class TelnetHandler extends NioHandler {
+public class FrontendHandler extends NioHandler {
 
+    private static Logger logger = LogManager.getLogger(FrontendHandler.class);
     private int readLastPos;
 
-    public TelnetHandler(Selector selector, SocketChannel socketChannel) throws IOException {
-        super(selector, socketChannel);
+    public FrontendHandler(DirectByteBufferPool bufferPool, Selector selector, SocketChannel socketChannel) throws IOException {
+        super(selector, socketChannel, bufferPool);
     }
 
     @Override
@@ -34,16 +40,23 @@ public class TelnetHandler extends NioHandler {
     @Override
     public void onConnection(SocketChannel socketChannel) throws IOException {
         super.onConnection(socketChannel);
-        socketChannel.write(ByteBuffer.wrap("Welcome to leader us!\r\ntelnet>".getBytes()));
+        HandshakePacket handshake = FakeMysqlServer.getInstance().response();
+        logger.info(handshake);
+//        Chunk chunk = pool.getChunk(handshake.calcPacketSize()+4);
+        Chunk chunk = bufferPool.getChunk(300);
+        handshake.write(chunk.getBuffer());
+        chunk.getBuffer().flip();
+        writeData(chunk);
+        bufferPool.recycleChunk(chunk);
     }
 
     @Override
     public void doReadData() throws IOException {
         String readLine = null;
-        int readNum=this.socketChannel.read(this.readBuffer);
-        System.out.println("readNum="+readNum);
+        int readNum = this.socketChannel.read(this.readBuffer);
+        System.out.println("readNum=" + readNum);
         //当channel读取到流的末尾是返回-1
-        if (readNum==-1){
+        if (readNum == -1) {
             //注销通道的读事件
             this.socketChannel.register(this.selector, 0);
             //删除附件
@@ -65,7 +78,8 @@ public class TelnetHandler extends NioHandler {
         }
         if (readLine != null) {
             String result = processCommand(readLine);
-            writeData(result.getBytes());
+            Chunk chunk = bufferPool.getChunk(result.length());
+            writeData(chunk);
         }
         //压缩字符串
         if (readBuffer.position() > readBuffer.capacity() / 2) {

@@ -1,6 +1,7 @@
 package leader.us.mysql.protocol.packet;
 
 import leader.us.mysql.protocol.constants.CapabilityFlags;
+import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.MySQLMessage;
 
 import java.nio.ByteBuffer;
@@ -30,6 +31,7 @@ import java.util.Arrays;
  * }
  */
 public class HandshakePacket extends MySQLPacket {
+    public static final byte[] RESERVED_FILL = new byte[10];
     //https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::Handshake
     //  1 [0a] protocol version
     public int protocolVersion;
@@ -105,12 +107,29 @@ public class HandshakePacket extends MySQLPacket {
 
     @Override
     public void write(ByteBuffer buffer) {
-
+        BufferUtil.writeUB3(buffer, packetLength);
+        buffer.put(packetSequenceId);
+        buffer.put((byte) protocolVersion);
+        BufferUtil.writeWithNull(buffer, serverVersion.getBytes());
+        BufferUtil.writeUB4(buffer, connectionId);
+        buffer.put(authPluginDataPart1);
+        buffer.put((byte) 0x00);
+        BufferUtil.writeUB2(buffer, capabilityLower);
+        buffer.put(characterSet);
+        BufferUtil.writeUB2(buffer, statusFlags);
+        BufferUtil.writeUB2(buffer, capabilityUpper);
+        authPluginDataLen = 21;
+        buffer.put(authPluginDataLen);
+        buffer.put(RESERVED_FILL);
+        buffer.put(authPluginDataPart2);
+        buffer.put((byte) 0x00);
+        BufferUtil.writeWithNull(buffer, authPluginName.getBytes());
     }
 
     @Override
     public int calcPacketSize() {
-        return 0;
+        int size = 45 + 2 + serverVersion.length() + authPluginName.length();
+        return size;
     }
 
     @Override

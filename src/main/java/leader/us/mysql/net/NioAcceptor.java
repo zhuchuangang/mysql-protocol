@@ -1,5 +1,8 @@
 package leader.us.mysql.net;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -12,6 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class NioAcceptor extends Thread {
 
+    private static Logger logger = LogManager.getLogger(NioAcceptor.class);
     private ServerSocketChannel serverSocketChannel;
     private NioReactor[] reactors;
 
@@ -23,8 +27,7 @@ public class NioAcceptor extends Thread {
         SocketAddress address = new InetSocketAddress(port);
         serverSocketChannel.bind(address);
         setName("nio-acceptor-0");
-        System.out.println("create acceptor thread:nio-acceptor-0");
-        System.out.println("server socket start on " + address);
+        logger.info("create acceptor thread:{},server socket start on {}", getName(), address);
     }
 
     @Override
@@ -33,10 +36,10 @@ public class NioAcceptor extends Thread {
             try {
                 //直接使用accept()方法,因为通道是阻塞的，所有accept()方法也是阻塞的
                 SocketChannel channel = serverSocketChannel.accept();
-                System.out.println(getName() + " thread accept " + channel);
+                logger.info("{} thread accept {}", getName(), channel);
                 //随机生成reactors的下标
                 int index = ThreadLocalRandom.current().nextInt(reactors.length);
-                System.out.println(getName() + " thread choose no." + index + " reactor register channel");
+                logger.info("{} thread choose no.{} reactor register channel", getName(), index);
                 FrontendConnection connection = new FrontendConnection(channel);
                 //调用reactor的registerClient方法，注册客户端连接
                 reactors[index].postRegister(connection);
