@@ -2,6 +2,7 @@ package leader.us.mysql.protocol.packet;
 
 import leader.us.mysql.protocol.constants.CapabilityFlags;
 import leader.us.mysql.protocol.constants.StatusFlags;
+import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.MySQLMessage;
 
 import java.nio.ByteBuffer;
@@ -80,7 +81,26 @@ public class OKPacket extends MySQLPacket {
 
     @Override
     public void write(ByteBuffer buffer) {
+        this.packetLength = calcPacketSize();
+        BufferUtil.writeUB3(buffer, this.packetLength);
+        buffer.put(this.packetSequenceId);
+        buffer.put((byte) 0x00);
+        BufferUtil.writeLength(buffer, this.affectedRows);
+        BufferUtil.writeLength(buffer, this.lastInsertId);
+        if ((capabilities & CapabilityFlags.CLIENT_PROTOCOL_41.getCode()) != 0) {
+            BufferUtil.writeUB2(buffer, this.statusFlags);
+            BufferUtil.writeUB2(buffer, this.warnings);
+        } else if ((capabilities & CapabilityFlags.CLIENT_TRANSACTIONS.getCode()) != 0) {
+            BufferUtil.writeUB2(buffer, this.statusFlags);
+        }
+        if ((capabilities & CapabilityFlags.CLIENT_SESSION_TRACK.getCode()) != 0) {
+            BufferUtil.writeWithLength(buffer, this.info.getBytes());
+            if ((statusFlags & StatusFlags.SERVER_SESSION_STATE_CHANGED.getCode()) != 0) {
+                BufferUtil.writeWithLength(buffer, this.sessionStateChanges.getBytes());
+            }
+        } else {
 
+        }
     }
 
     @Override

@@ -2,7 +2,9 @@ package leader.us.mysql.net;
 
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
+import leader.us.mysql.protocol.packet.AuthPacket;
 import leader.us.mysql.protocol.packet.HandshakePacket;
+import leader.us.mysql.protocol.packet.OKPacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,7 +28,6 @@ public class FrontendHandler extends NioHandler {
     @Override
     public void run() {
         try {
-            System.out.println("handler run on " + Thread.currentThread().getName() + " | " + super.hashCode());
             if (this.selectionKey.isReadable()) {
                 doReadData();
             } else if (this.selectionKey.isWritable()) {
@@ -42,50 +43,69 @@ public class FrontendHandler extends NioHandler {
         super.onConnection(socketChannel);
         HandshakePacket handshake = FakeMysqlServer.getInstance().response();
         logger.info(handshake);
-//        Chunk chunk = pool.getChunk(handshake.calcPacketSize()+4);
-        Chunk chunk = bufferPool.getChunk(300);
+        Chunk chunk = bufferPool.getChunk(handshake.calcPacketSize() + 4);
         handshake.write(chunk.getBuffer());
         chunk.getBuffer().flip();
         writeData(chunk);
-        bufferPool.recycleChunk(chunk);
     }
 
     @Override
     public void doReadData() throws IOException {
-        String readLine = null;
-        int readNum = this.socketChannel.read(this.readBuffer);
-        System.out.println("readNum=" + readNum);
-        //当channel读取到流的末尾是返回-1
+        Chunk chunk = bufferPool.getChunk(1024);
+        int readNum = this.socketChannel.read(chunk.getBuffer());
+        chunk.getBuffer().flip();
         if (readNum == -1) {
-            //注销通道的读事件
-            this.socketChannel.register(this.selector, 0);
-            //删除附件
-            this.selectionKey.attach(null);
+            socketChannel.socket().close();
+            socketChannel.close();
+            selectionKey.cancel();
             return;
         }
-        int messageLastPos = this.readBuffer.position();
-        int readStartPos = readLastPos;
-        for (int i = readStartPos; i < messageLastPos; i++) {
-            readLastPos = i;
-            //回车符
-            if (this.readBuffer.get(i) == 13) {
-                byte[] temp = new byte[readLastPos - readStartPos];
-                this.readBuffer.position(readStartPos);
-                this.readBuffer.get(temp, 0, temp.length);
-                readLine = new String(temp);
-                break;
-            }
-        }
-        if (readLine != null) {
-            String result = processCommand(readLine);
-            Chunk chunk = bufferPool.getChunk(result.length());
-            writeData(chunk);
-        }
-        //压缩字符串
-        if (readBuffer.position() > readBuffer.capacity() / 2) {
-            readBuffer.limit(readLastPos);
-            readBuffer.compact();
-        }
+
+        AuthPacket ap = new AuthPacket();
+        ap.read(chunk.getBuffer());
+        bufferPool.recycleChunk(chunk);
+        logger.info(ap);
+
+        OKPacket op=new OKPacket();
+        op.capabilities=FakeMysqlServer.getFakeServerCapabilities();
+        chunk = bufferPool.getChunk(1024);
+
+        writeData(chunk);
+
+//        String readLine = null;
+//        int readNum = this.socketChannel.read(this.readBuffer);
+//        System.out.println("readNum=" + readNum);
+//        //当channel读取到流的末尾是返回-1
+//        if (readNum == -1) {
+//            //注销通道的读事件
+//            this.socketChannel.register(this.selector, 0);
+//            //删除附件
+//            this.selectionKey.attach(null);
+//            return;
+//        }
+//        int messageLastPos = this.readBuffer.position();
+//        int readStartPos = readLastPos;
+//        for (int i = readStartPos; i < messageLastPos; i++) {
+//            readLastPos = i;
+//            //回车符
+//            if (this.readBuffer.get(i) == 13) {
+//                byte[] temp = new byte[readLastPos - readStartPos];
+//                this.readBuffer.position(readStartPos);
+//                this.readBuffer.get(temp, 0, temp.length);
+//                readLine = new String(temp);
+//                break;
+//            }
+//        }
+//        if (readLine != null) {
+//            String result = processCommand(readLine);
+//            Chunk chunk = bufferPool.getChunk(result.length());
+//            writeData(chunk);
+//        }
+//        //压缩字符串
+//        if (readBuffer.position() > readBuffer.capacity() / 2) {
+//            readBuffer.limit(readLastPos);
+//            readBuffer.compact();
+//        }
 
     }
 

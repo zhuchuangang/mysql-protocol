@@ -60,11 +60,10 @@ public abstract class NioHandler implements Runnable {
         throw new IOException("If don`t implement NioHandler.doReadData() method,you can`t read socket data!");
     }
 
-    //TODO 写出数据大，使用bufferpool
     public void doWriteData() throws IOException {
         while (!writeFlag.compareAndSet(false, true)) {
             //until the release
-            System.out.println("doWriteData:until the release");
+            //System.out.println("doWriteData:until the release");
         }
         try {
             writeToChannel(writeChunk);
@@ -77,14 +76,14 @@ public abstract class NioHandler implements Runnable {
     public void writeData(Chunk chunk) throws IOException {
         while (!writeFlag.compareAndSet(false, true)) {
             //until the release
-            System.out.println("writeData:until the release");
+            //System.out.println("writeData:until the release");
         }
         try {
             if (writeChunk == null && bufferQueue.isEmpty()) {
-                System.out.println("writeBuffer is null,bufferQueue is empty,and write buffer");
+                //System.out.println("writeBuffer is null,bufferQueue is empty,and write buffer");
                 writeToChannel(chunk);
             } else {
-                System.out.println("bufferQueue add buffer,and write writeBuffer");
+                //System.out.println("bufferQueue add buffer,and write writeBuffer");
                 bufferQueue.add(chunk);
                 writeToChannel(writeChunk);
             }
@@ -94,7 +93,7 @@ public abstract class NioHandler implements Runnable {
         }
     }
 
-    //TODO 写出数据大，使用bufferpool
+
     public void writeToChannel(Chunk chunk) throws IOException {
         int writeNum = this.socketChannel.write(chunk.getBuffer());
         System.out.println("write num:" + writeNum);

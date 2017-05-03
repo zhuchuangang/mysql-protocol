@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class FakeMysqlServer {
 
+    public static final String SERVER_VERSION = "fake-mysql-server-v1.0";
     private static FakeMysqlServer mysqlServer;
-
     private HandshakePacket handshake;
     private AtomicInteger count = new AtomicInteger(0);
 
@@ -24,9 +24,7 @@ public class FakeMysqlServer {
         handshake = new HandshakePacket();
         handshake.packetSequenceId = 0;
         handshake.protocolVersion = 0x0a;
-        handshake.serverVersion = "5.5.5-10.1.14-MariaDB-1~jessie";
-        //handshake.connectionId = count.incrementAndGet();
-        //handshake.authPluginDataPart1 = authDataPart1;
+        handshake.serverVersion = SERVER_VERSION;
         handshake.capabilities = getFakeServerCapabilities();
         handshake.capabilityLower = handshake.capabilities | 0xff;
         handshake.characterSet = 0x53;//utf8_bin
@@ -34,7 +32,6 @@ public class FakeMysqlServer {
         handshake.capabilityUpper = handshake.capabilities >> 16;
         handshake.authPluginDataLen = 21;
         handshake.reserved = HandshakePacket.RESERVED_FILL;
-        //handshake.authPluginDataPart2 = authDataPart2;
         handshake.authPluginName = "mysql_native_password";
     }
 

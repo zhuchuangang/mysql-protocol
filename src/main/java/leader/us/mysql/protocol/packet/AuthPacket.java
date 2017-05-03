@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
+ * https://mariadb.com/kb/en/mariadb/1-connecting-connecting/
+ * <p>
  * 4              capabilities flags, CLIENT_PROTOCOL_41 always set
  * 4              max-packet size
  * 1              character set
@@ -87,9 +89,7 @@ public class AuthPacket extends MySQLPacket {
      */
     public byte[] password;
 
-    public long authResponseLength;
-
-    public String authResponse;
+    public int authResponseLength;
 
 
     /**
@@ -132,15 +132,15 @@ public class AuthPacket extends MySQLPacket {
         this.packetSequenceId = message.read();
         this.capabilityFlags = message.readUB4();
         this.characterSet = message.read();
-        this.reserved = FILLER;
+        this.reserved = message.readBytes(23);
         this.username = message.readStringWithNull();
         if ((this.capabilityFlags & CapabilityFlags.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA.getCode()) != 0) {
-            //this.authResponseLength = message.readLength();
-            //this.authResponse = message.read(this.authResponseLength);
+            this.password = message.readBytesWithLength();
         } else if ((this.capabilityFlags & CapabilityFlags.CLIENT_SECURE_CONNECTION.getCode()) != 0) {
-
+            this.authResponseLength = message.read();
+            this.password = message.readBytes(this.authResponseLength);
         } else {
-
+            message.move(1);
         }
         if ((capabilityFlags & CapabilityFlags.CLIENT_CONNECT_WITH_DB.getCode()) != 0) {
             database = message.readStringWithNull();
@@ -148,13 +148,11 @@ public class AuthPacket extends MySQLPacket {
         if ((capabilityFlags & CapabilityFlags.CLIENT_PLUGIN_AUTH.getCode()) != 0) {
             authPluginName = message.readStringWithNull();
         }
-
-
     }
 
     @Override
     public void write(ByteBuffer buffer) {
-        buffer.position(0);
+        //buffer.position(0);
         this.packetLength = calcPacketSize();
         BufferUtil.writeUB3(buffer, this.packetLength);
         buffer.put(this.packetSequenceId);
@@ -229,7 +227,6 @@ public class AuthPacket extends MySQLPacket {
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
                 ", authResponseLength=" + authResponseLength +
-                ", authResponse='" + authResponse + '\'' +
                 ", database='" + database + '\'' +
                 ", authPluginName='" + authPluginName + '\'' +
                 ", keyValuesLength='" + keyValuesLength + '\'' +
