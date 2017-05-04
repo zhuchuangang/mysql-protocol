@@ -22,7 +22,7 @@ public abstract class NioHandler implements Runnable {
     protected static final int MAX_READ = 1024;
     protected DirectByteBufferPool bufferPool;
     protected final Selector selector;
-    protected final SocketChannel socketChannel;
+    protected final NioConnection connection;
     protected SelectionKey selectionKey;
     protected ByteBuffer readBuffer;
     //protected ByteBuffer writeBuffer;
@@ -33,23 +33,23 @@ public abstract class NioHandler implements Runnable {
     private AtomicBoolean writeFlag = new AtomicBoolean(false);
 
 
-    public NioHandler(Selector selector, SocketChannel socketChannel, DirectByteBufferPool bufferPool) throws IOException {
+    public NioHandler(Selector selector, NioConnection connection, DirectByteBufferPool bufferPool) throws IOException {
         this.bufferPool = bufferPool;
         this.readBuffer = ByteBuffer.allocateDirect(MAX_READ);
         this.selector = selector;
         this.selector.wakeup();
-        this.socketChannel = socketChannel;
+        this.connection = connection;
         //设置为非阻塞状态
-        this.socketChannel.configureBlocking(false);
+        this.connection.getSocketChannel().configureBlocking(false);
         //注册写事件
         //TODO 使用select(timeout),register方法阻塞几秒，如何解决？
         //TODO 使用select(),register方法阻塞死掉，如何解决？
         //http://tool.oschina.net/apidocs/apidoc?api=jdk-zh
         //如果一个selection thread已经在select方法上等待ing,那么这个时候如果有另一条线程调用channal.register方法的话,那么它将被blocking.
         //http://blog.csdn.net/chenxuegui1234/article/details/17766813
-        this.selectionKey = this.socketChannel.register(selector, SelectionKey.OP_READ);
+        this.selectionKey = this.connection.getSocketChannel().register(selector, SelectionKey.OP_READ);
         this.selectionKey.attach(this);
-        this.onConnection(this.socketChannel);
+        this.onConnection(this.connection.getSocketChannel());
     }
 
     public void onConnection(SocketChannel socketChannel) throws IOException {
@@ -95,7 +95,7 @@ public abstract class NioHandler implements Runnable {
 
 
     public void writeToChannel(Chunk chunk) throws IOException {
-        int writeNum = this.socketChannel.write(chunk.getBuffer());
+        int writeNum = this.connection.getSocketChannel().write(chunk.getBuffer());
         System.out.println("write num:" + writeNum);
         if (chunk.getBuffer().hasRemaining()) {
             selectionKey.interestOps(SelectionKey.OP_WRITE);

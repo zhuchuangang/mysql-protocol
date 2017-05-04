@@ -55,7 +55,7 @@ public class AuthPacket extends MySQLPacket {
     /**
      * 最大包大小  4个字节  max-packet size
      */
-    public int maxPacket;
+    public int maxPacket = 0x1 << 24 - 1;
     /**
      * 字符集     1个字节   character set
      */
@@ -131,7 +131,7 @@ public class AuthPacket extends MySQLPacket {
         this.packetLength = message.readUB3();
         this.packetSequenceId = message.read();
         this.capabilityFlags = message.readUB4();
-        this.maxPacket=message.readUB4();
+        this.maxPacket = message.readUB4();
         this.characterSet = message.read();
         message.move(23);
         this.username = message.readStringWithNull();

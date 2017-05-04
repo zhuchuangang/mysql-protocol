@@ -22,9 +22,9 @@ public class FrontendHandler extends NioHandler {
     private static Logger logger = LogManager.getLogger(FrontendHandler.class);
     private SqlCommandHandler commandHandler;
 
-    public FrontendHandler(Selector selector, SocketChannel socketChannel, DirectByteBufferPool bufferPool) throws IOException {
-        super(selector, socketChannel, bufferPool);
-        commandHandler = new FakeLoginAuthenticationHandler(bufferPool);
+    public FrontendHandler(Selector selector, FrontendConnection connection, DirectByteBufferPool bufferPool) throws IOException {
+        super(selector, connection, bufferPool);
+        this.commandHandler = new FakeLoginAuthenticationHandler(bufferPool);
     }
 
     @Override
@@ -54,19 +54,19 @@ public class FrontendHandler extends NioHandler {
     @Override
     public void doReadData() throws IOException {
         Chunk chunk = bufferPool.getChunk(1024);
-        int readNum = this.socketChannel.read(chunk.getBuffer());
+        int readNum = this.connection.getSocketChannel().read(chunk.getBuffer());
         chunk.getBuffer().flip();
         if (readNum == 0) {
             return;
         }
         if (readNum == -1) {
-            socketChannel.socket().close();
-            socketChannel.close();
+            this.connection.getSocketChannel().socket().close();
+            this.connection.getSocketChannel().close();
             selectionKey.cancel();
             return;
         }
 
-        chunk = commandHandler.response(chunk, socketChannel, this);
+        chunk = commandHandler.response(chunk, this.connection.getSocketChannel(), this);
         writeData(chunk);
     }
 

@@ -26,17 +26,12 @@ public class NioConnector extends Thread {
     private NioReactor[] reactors;
     private SocketChannel socketChannel;
     private Selector selector;
-    private String host;
-    private int port;
-    private String database;
-    private HandshakePacket handshake;
+    private SystemConfig config;
 
 
-    public NioConnector(String host, int port, String database, NioReactor[] reactors) throws IOException {
-        this.pool = DirectByteBufferPool.getInstance();
-        this.host = host;
-        this.port = port;
-        this.database = database;
+    public NioConnector(SystemConfig config, NioReactor[] reactors, DirectByteBufferPool bufferPool) throws IOException {
+        this.pool = bufferPool;
+        this.config = config;
         this.reactors = reactors;
         this.selector = Selector.open();
         this.socketChannel = SocketChannel.open();
@@ -46,7 +41,7 @@ public class NioConnector extends Thread {
 
     @Override
     public void run() {
-        SocketAddress address = new InetSocketAddress(host, port);
+        SocketAddress address = new InetSocketAddress(config.getHost(), config.getPort());
         try {
             this.socketChannel.connect(address);
         } catch (IOException e) {
@@ -73,29 +68,22 @@ public class NioConnector extends Thread {
                         if (socketChannel.isConnectionPending()) {
                             socketChannel.finishConnect();
                         }
-                        Chunk chunk = pool.getChunk(300);
-                        socketChannel.read(chunk.getBuffer());
-                        handshake = new HandshakePacket();
-                        handshake.read(chunk.getBuffer());
-                        pool.recycleChunk(chunk);
-                        logger.info(handshake);
+//                        Chunk chunk = pool.getChunk(300);
+//                        socketChannel.read(chunk.getBuffer());
+//                        handshake = new HandshakePacket();
+//                        handshake.read(chunk.getBuffer());
+//                        pool.recycleChunk(chunk);
+//                        logger.info(handshake);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     int index = ThreadLocalRandom.current().nextInt(reactors.length);
-                    BackendConnection connection = new BackendConnection(socketChannel);
+                    BackendConnection connection = new BackendConnection(socketChannel,config, pool);
                     reactors[index].postRegister(connection);
                 }
                 iterator.remove();
             }
             selectionKeys.clear();
         }
-    }
-
-
-    public void authorization() {
-//        AuthPacket ap = new AuthPacket();
-//
-//        ByteBuffer bb = pool.getChunk()
     }
 }
