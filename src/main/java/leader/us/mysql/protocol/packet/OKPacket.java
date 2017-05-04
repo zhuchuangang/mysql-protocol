@@ -75,7 +75,7 @@ public class OKPacket extends MySQLPacket {
                 sessionStateChanges = message.readStringWithLength();
             }
         } else {
-
+            info = new String(message.readBytes(packetLength + 4 - buffer.position()));
         }
     }
 
@@ -99,13 +99,34 @@ public class OKPacket extends MySQLPacket {
                 BufferUtil.writeWithLength(buffer, this.sessionStateChanges.getBytes());
             }
         } else {
-
+            if (info!=null) {
+                buffer.put(info.getBytes());
+            }
         }
     }
 
     @Override
     public int calcPacketSize() {
-        return 0;
+        int size = 1
+                + BufferUtil.getLength(this.affectedRows)
+                + BufferUtil.getLength(this.lastInsertId);
+        if ((capabilities & CapabilityFlags.CLIENT_PROTOCOL_41.getCode()) != 0) {
+            size += 4;
+        } else if ((capabilities & CapabilityFlags.CLIENT_TRANSACTIONS.getCode()) != 0) {
+            size += 2;
+        }
+        if ((capabilities & CapabilityFlags.CLIENT_SESSION_TRACK.getCode()) != 0) {
+            size += BufferUtil.getLength(this.info.getBytes());
+            if ((statusFlags & StatusFlags.SERVER_SESSION_STATE_CHANGED.getCode()) != 0) {
+                size += BufferUtil.getLength(this.sessionStateChanges.getBytes());
+            }
+        } else {
+            if (info!=null) {
+                size += this.info.getBytes().length;
+            }
+        }
+
+        return size;
     }
 
     @Override

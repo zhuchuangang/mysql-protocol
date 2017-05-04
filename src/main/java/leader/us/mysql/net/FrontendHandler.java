@@ -2,6 +2,7 @@ package leader.us.mysql.net;
 
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
+import leader.us.mysql.protocol.constants.StatusFlags;
 import leader.us.mysql.protocol.packet.AuthPacket;
 import leader.us.mysql.protocol.packet.HandshakePacket;
 import leader.us.mysql.protocol.packet.OKPacket;
@@ -54,6 +55,9 @@ public class FrontendHandler extends NioHandler {
         Chunk chunk = bufferPool.getChunk(1024);
         int readNum = this.socketChannel.read(chunk.getBuffer());
         chunk.getBuffer().flip();
+        if (readNum == 0) {
+            return;
+        }
         if (readNum == -1) {
             socketChannel.socket().close();
             socketChannel.close();
@@ -64,49 +68,21 @@ public class FrontendHandler extends NioHandler {
         AuthPacket ap = new AuthPacket();
         ap.read(chunk.getBuffer());
         bufferPool.recycleChunk(chunk);
-        logger.info(ap);
+        if (logger.isDebugEnabled()) {
+            logger.debug("client auth packet:", ap);
+        }
 
-        OKPacket op=new OKPacket();
-        op.capabilities=FakeMysqlServer.getFakeServerCapabilities();
-        chunk = bufferPool.getChunk(1024);
-
+        OKPacket op = new OKPacket();
+        op.packetSequenceId = 2;
+        op.capabilities = FakeMysqlServer.getFakeServerCapabilities();
+        op.statusFlags = StatusFlags.SERVER_STATUS_AUTOCOMMIT.getCode();
+        chunk = bufferPool.getChunk(op.calcPacketSize() + 4);
+        op.write(chunk.getBuffer());
+        chunk.getBuffer().flip();
+        if (logger.isDebugEnabled()) {
+            logger.debug("server response client ok packet:", op);
+        }
         writeData(chunk);
-
-//        String readLine = null;
-//        int readNum = this.socketChannel.read(this.readBuffer);
-//        System.out.println("readNum=" + readNum);
-//        //当channel读取到流的末尾是返回-1
-//        if (readNum == -1) {
-//            //注销通道的读事件
-//            this.socketChannel.register(this.selector, 0);
-//            //删除附件
-//            this.selectionKey.attach(null);
-//            return;
-//        }
-//        int messageLastPos = this.readBuffer.position();
-//        int readStartPos = readLastPos;
-//        for (int i = readStartPos; i < messageLastPos; i++) {
-//            readLastPos = i;
-//            //回车符
-//            if (this.readBuffer.get(i) == 13) {
-//                byte[] temp = new byte[readLastPos - readStartPos];
-//                this.readBuffer.position(readStartPos);
-//                this.readBuffer.get(temp, 0, temp.length);
-//                readLine = new String(temp);
-//                break;
-//            }
-//        }
-//        if (readLine != null) {
-//            String result = processCommand(readLine);
-//            Chunk chunk = bufferPool.getChunk(result.length());
-//            writeData(chunk);
-//        }
-//        //压缩字符串
-//        if (readBuffer.position() > readBuffer.capacity() / 2) {
-//            readBuffer.limit(readLastPos);
-//            readBuffer.compact();
-//        }
-
     }
 
     private String processCommand(String cmd) {

@@ -131,6 +131,7 @@ public class AuthPacket extends MySQLPacket {
         this.packetLength = message.readUB3();
         this.packetSequenceId = message.read();
         this.capabilityFlags = message.readUB4();
+        this.maxPacket=message.readUB4();
         this.characterSet = message.read();
         this.reserved = message.readBytes(23);
         this.username = message.readStringWithNull();
