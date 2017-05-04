@@ -20,7 +20,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Created by zcg on 2017/5/4.
  */
-public class FakeLoginAuthenticationHandler {
+public class FakeLoginAuthenticationHandler implements SqlCommandHandler {
     private static Logger logger = LogManager.getLogger(FakeLoginAuthenticationHandler.class);
     private DirectByteBufferPool bufferPool;
 
@@ -28,7 +28,7 @@ public class FakeLoginAuthenticationHandler {
         this.bufferPool = bufferPool;
     }
 
-    public Chunk response(Chunk chunk, SocketChannel socketChannel) {
+    public Chunk response(Chunk chunk, SocketChannel socketChannel, FrontendHandler handler) {
         AuthPacket ap = new AuthPacket();
         ap.read(chunk.getBuffer());
         bufferPool.recycleChunk(chunk);
@@ -66,12 +66,13 @@ public class FakeLoginAuthenticationHandler {
             if (logger.isDebugEnabled()) {
                 logger.debug("login authentication success,server response client ok packet:{}", op);
             }
+            handler.setCommandHandler(new NormalSchemaSqlCommandHandler());
         } else {
             ERRPacket ep = new ERRPacket();
             ep.packetSequenceId = 2;
             ep.capabilities = FakeMysqlServer.getFakeServerCapabilities();
             ep.errorCode = ErrorCode.ER_ACCESS_DENIED_ERROR;
-            ep.sqlState="28000";
+            ep.sqlState = "28000";
             String address = "";
             try {
                 address = socketChannel.getLocalAddress().toString();

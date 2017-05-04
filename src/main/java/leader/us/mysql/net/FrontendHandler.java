@@ -20,11 +20,11 @@ import java.nio.channels.SocketChannel;
 public class FrontendHandler extends NioHandler {
 
     private static Logger logger = LogManager.getLogger(FrontendHandler.class);
-    private FakeLoginAuthenticationHandler loginAuthenticationHandler;
+    private SqlCommandHandler commandHandler;
 
     public FrontendHandler(Selector selector, SocketChannel socketChannel, DirectByteBufferPool bufferPool) throws IOException {
         super(selector, socketChannel, bufferPool);
-        loginAuthenticationHandler = new FakeLoginAuthenticationHandler(bufferPool);
+        commandHandler = new FakeLoginAuthenticationHandler(bufferPool);
     }
 
     @Override
@@ -66,7 +66,11 @@ public class FrontendHandler extends NioHandler {
             return;
         }
 
-        chunk = loginAuthenticationHandler.response(chunk, socketChannel);
+        chunk = commandHandler.response(chunk, socketChannel, this);
         writeData(chunk);
+    }
+
+    public void setCommandHandler(SqlCommandHandler commandHandler) {
+        this.commandHandler = commandHandler;
     }
 }
