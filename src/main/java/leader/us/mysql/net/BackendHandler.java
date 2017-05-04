@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel;
  */
 public class BackendHandler extends NioHandler {
 
-    public BackendHandler(DirectByteBufferPool bufferPool,Selector selector, SocketChannel socketChannel) throws IOException {
+    public BackendHandler(Selector selector, SocketChannel socketChannel,DirectByteBufferPool bufferPool) throws IOException {
         super(selector, socketChannel,bufferPool);
     }
 

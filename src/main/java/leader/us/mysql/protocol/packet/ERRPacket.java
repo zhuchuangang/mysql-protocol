@@ -1,6 +1,7 @@
 package leader.us.mysql.protocol.packet;
 
 import leader.us.mysql.protocol.constants.CapabilityFlags;
+import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.MySQLMessage;
 
 import java.nio.ByteBuffer;
@@ -27,7 +28,7 @@ public class ERRPacket extends MySQLPacket {
 // }
     public byte sqlStateMarker;
 
-    public byte[] sqlState;
+    public String sqlState;
     // string<EOF>	error_message	human readable error message
     public String errorMessage;
 
@@ -42,19 +43,33 @@ public class ERRPacket extends MySQLPacket {
         this.errorCode = message.readUB2();
         if ((capabilities & CapabilityFlags.CLIENT_PROTOCOL_41.getCode()) > 0) {
             sqlStateMarker = message.read();
-            sqlState = message.readBytes(5);
+            sqlState = new String(message.readBytes(5));
         }
         errorMessage = message.readString();
     }
 
     @Override
     public void write(ByteBuffer buffer) {
-        super.write(buffer);
+        BufferUtil.writeUB3(buffer, calcPacketSize());
+        buffer.put(packetSequenceId);
+        buffer.put((byte) 0xff);
+        BufferUtil.writeUB2(buffer, errorCode);
+        if ((capabilities & CapabilityFlags.CLIENT_PROTOCOL_41.getCode()) > 0) {
+            buffer.put((byte) '#');
+            buffer.put(sqlState.getBytes());
+        }
+        if (errorMessage != null) {
+            buffer.put(errorMessage.getBytes());
+        }
     }
 
     @Override
     public int calcPacketSize() {
-        return 0;
+        int size = 9;
+        if (errorMessage != null) {
+            size += errorMessage.length();
+        }
+        return size;
     }
 
     @Override
@@ -70,7 +85,7 @@ public class ERRPacket extends MySQLPacket {
                 ", header=" + header +
                 ", errorCode=" + errorCode +
                 ", sqlStateMarker=" + sqlStateMarker +
-                ", sqlState=" + Arrays.toString(sqlState) +
+                ", sqlState=" + sqlState +
                 ", errorMessage='" + errorMessage + '\'' +
                 ", capabilities=" + capabilities +
                 "}\n";

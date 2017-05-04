@@ -20,10 +20,11 @@ import java.nio.channels.SocketChannel;
 public class FrontendHandler extends NioHandler {
 
     private static Logger logger = LogManager.getLogger(FrontendHandler.class);
-    private int readLastPos;
+    private FakeLoginAuthenticationHandler loginAuthenticationHandler;
 
-    public FrontendHandler(DirectByteBufferPool bufferPool, Selector selector, SocketChannel socketChannel) throws IOException {
+    public FrontendHandler(Selector selector, SocketChannel socketChannel, DirectByteBufferPool bufferPool) throws IOException {
         super(selector, socketChannel, bufferPool);
+        loginAuthenticationHandler = new FakeLoginAuthenticationHandler(bufferPool);
     }
 
     @Override
@@ -35,7 +36,7 @@ public class FrontendHandler extends NioHandler {
                 doWriteData();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -65,29 +66,24 @@ public class FrontendHandler extends NioHandler {
             return;
         }
 
-        AuthPacket ap = new AuthPacket();
-        ap.read(chunk.getBuffer());
-        bufferPool.recycleChunk(chunk);
-        if (logger.isDebugEnabled()) {
-            logger.debug("client auth packet:", ap);
-        }
+//        AuthPacket ap = new AuthPacket();
+//        ap.read(chunk.getBuffer());
+//        bufferPool.recycleChunk(chunk);
+//        if (logger.isDebugEnabled()) {
+//            logger.debug("client auth packet:", ap);
+//        }
+//        OKPacket op = new OKPacket();
+//        op.packetSequenceId = 2;
+//        op.capabilities = FakeMysqlServer.getFakeServerCapabilities();
+//        op.statusFlags = StatusFlags.SERVER_STATUS_AUTOCOMMIT.getCode();
+//        chunk = bufferPool.getChunk(op.calcPacketSize() + 4);
+//        op.write(chunk.getBuffer());
+//        chunk.getBuffer().flip();
+//        if (logger.isDebugEnabled()) {
+//            logger.debug("server response client ok packet:", op);
+//        }
 
-        OKPacket op = new OKPacket();
-        op.packetSequenceId = 2;
-        op.capabilities = FakeMysqlServer.getFakeServerCapabilities();
-        op.statusFlags = StatusFlags.SERVER_STATUS_AUTOCOMMIT.getCode();
-        chunk = bufferPool.getChunk(op.calcPacketSize() + 4);
-        op.write(chunk.getBuffer());
-        chunk.getBuffer().flip();
-        if (logger.isDebugEnabled()) {
-            logger.debug("server response client ok packet:", op);
-        }
+        chunk = loginAuthenticationHandler.response(chunk, socketChannel);
         writeData(chunk);
-    }
-
-    private String processCommand(String cmd) {
-        String result = LocalCmdUtil.callCmdAndGetResult(cmd);
-        result += "\r\ntelnet>";
-        return result;
     }
 }

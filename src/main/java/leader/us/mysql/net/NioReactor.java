@@ -84,9 +84,9 @@ public class NioReactor extends Thread {
             }
             try {
                 if (c instanceof FrontendConnection) {
-                    new FrontendHandler(bufferPool, selector, c.getSocketChannel());
+                    new FrontendHandler(selector, c.getSocketChannel(),bufferPool);
                 } else if (c instanceof BackendConnection) {
-                    new BackendHandler(bufferPool, selector, c.getSocketChannel());
+                    new BackendHandler(selector, c.getSocketChannel(),bufferPool);
                 }
                 if (logger.isDebugEnabled()) {
                     logger.debug("{} create nioHandler,and register channel to listen for read event", getName(), c);

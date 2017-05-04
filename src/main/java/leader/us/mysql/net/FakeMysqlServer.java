@@ -16,6 +16,9 @@ public class FakeMysqlServer {
     private static FakeMysqlServer mysqlServer;
     private HandshakePacket handshake;
     private AtomicInteger count = new AtomicInteger(0);
+    //TODO config username and password
+    private String username = "root";
+    private String password = "123456";
 
     private FakeMysqlServer() {
         // 生成认证数据
@@ -77,4 +80,23 @@ public class FakeMysqlServer {
         return flag;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public HandshakePacket getHandshake() {
+        return handshake;
+    }
 }
