@@ -10,8 +10,8 @@ public class DirectByteBufferPool {
     public static final double GROWTH_FACTOR = 1.25;
     public static final int MIN_SIZE = 4;
     private static DirectByteBufferPool pool;
-    private volatile Slab temp;
-    private volatile TreeSet<Slab> slabClass;
+    private Slab temp;
+    private TreeSet<Slab> slabClass;
 
 
     private DirectByteBufferPool() {

@@ -33,7 +33,7 @@ public class FakeLoginAuthenticationHandler {
         ap.read(chunk.getBuffer());
         bufferPool.recycleChunk(chunk);
         if (logger.isDebugEnabled()) {
-            logger.debug("client auth packet:", ap);
+            logger.debug("client auth packet:{}", ap);
         }
         boolean success = false;
         FakeMysqlServer server = FakeMysqlServer.getInstance();
@@ -64,7 +64,7 @@ public class FakeLoginAuthenticationHandler {
             op.write(chunk.getBuffer());
             chunk.getBuffer().flip();
             if (logger.isDebugEnabled()) {
-                logger.debug("login authentication success,server response client ok packet:", op);
+                logger.debug("login authentication success,server response client ok packet:{}", op);
             }
         } else {
             ERRPacket ep = new ERRPacket();
@@ -83,7 +83,7 @@ public class FakeLoginAuthenticationHandler {
             ep.write(chunk.getBuffer());
             chunk.getBuffer().flip();
             if (logger.isDebugEnabled()) {
-                logger.debug("login authentication error,server response client error packet:", ep);
+                logger.debug("login authentication error,server response client error packet:{}", ep);
             }
         }
         return chunk;

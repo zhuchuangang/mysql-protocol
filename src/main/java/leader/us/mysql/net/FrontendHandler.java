@@ -66,23 +66,6 @@ public class FrontendHandler extends NioHandler {
             return;
         }
 
-//        AuthPacket ap = new AuthPacket();
-//        ap.read(chunk.getBuffer());
-//        bufferPool.recycleChunk(chunk);
-//        if (logger.isDebugEnabled()) {
-//            logger.debug("client auth packet:", ap);
-//        }
-//        OKPacket op = new OKPacket();
-//        op.packetSequenceId = 2;
-//        op.capabilities = FakeMysqlServer.getFakeServerCapabilities();
-//        op.statusFlags = StatusFlags.SERVER_STATUS_AUTOCOMMIT.getCode();
-//        chunk = bufferPool.getChunk(op.calcPacketSize() + 4);
-//        op.write(chunk.getBuffer());
-//        chunk.getBuffer().flip();
-//        if (logger.isDebugEnabled()) {
-//            logger.debug("server response client ok packet:", op);
-//        }
-
         chunk = loginAuthenticationHandler.response(chunk, socketChannel);
         writeData(chunk);
     }

@@ -10,8 +10,8 @@ import java.util.LinkedList;
 public class Slab implements Comparable<Slab> {
     public static final int PAGE_SIZE = 1024 * 1024;
     private int chunkSize;
-    private volatile LinkedList<ByteBuffer> pages;
-    private volatile BitSet usageState;
+    private LinkedList<ByteBuffer> pages;
+    private BitSet usageState;
 
     public Slab() {
     }
@@ -47,9 +47,9 @@ public class Slab implements Comparable<Slab> {
         int position = (index * chunkSize) % PAGE_SIZE;
 //        System.out.println("position=" + position);
         int limit = ((index + 1) * chunkSize) % PAGE_SIZE;
-//        System.out.println("limit=" + limit);
-        page.position(position);
+        //System.out.println("limit=" + page.limit()+"  position="+position);
         page.limit(limit);
+        page.position(position);
         ByteBuffer bb = page.slice();
 //        System.out.println("page.slice() is " + bb);
         return new Chunk(chunkSize, index, bb);

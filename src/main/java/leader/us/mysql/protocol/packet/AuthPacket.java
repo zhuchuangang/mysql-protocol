@@ -133,7 +133,7 @@ public class AuthPacket extends MySQLPacket {
         this.capabilityFlags = message.readUB4();
         this.maxPacket=message.readUB4();
         this.characterSet = message.read();
-        this.reserved = message.readBytes(23);
+        message.move(23);
         this.username = message.readStringWithNull();
         if ((this.capabilityFlags & CapabilityFlags.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA.getCode()) != 0) {
             this.password = message.readBytesWithLength();
