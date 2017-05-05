@@ -26,6 +26,7 @@ public class NormalSchemaSqlCommandHandler implements SqlCommandHandler {
         BackendConnection connection = connectionPool.connection();
         if (connection != null) {
             BackendHandler backendHandler = connection.getBackendHandler();
+            backendHandler.setFrontendHandler(handler);
             try {
                 backendHandler.writeData(chunk);
             } catch (IOException e) {

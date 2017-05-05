@@ -16,6 +16,7 @@ import java.nio.channels.SocketChannel;
 public class BackendHandler extends NioHandler {
 
     private static Logger logger = LogManager.getLogger(BackendHandler.class);
+    private FrontendHandler frontendHandler;
 
     public BackendHandler(Selector selector, BackendConnection connection, DirectByteBufferPool bufferPool) throws IOException {
         super(selector, connection, bufferPool);
@@ -58,7 +59,12 @@ public class BackendHandler extends NioHandler {
             return;
         }
 
-        //chunk = commandHandler.response(chunk, this.connection.getSocketChannel(), this);
-        //writeData(chunk);
+        if (frontendHandler != null) {
+            frontendHandler.writeData(chunk);
+        }
+    }
+
+    public void setFrontendHandler(FrontendHandler frontendHandler) {
+        this.frontendHandler = frontendHandler;
     }
 }

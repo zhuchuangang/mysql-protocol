@@ -67,7 +67,9 @@ public class FrontendHandler extends NioHandler {
         }
 
         chunk = commandHandler.response(chunk, this.connection.getSocketChannel(), this);
-        writeData(chunk);
+        if (chunk != null) {
+            writeData(chunk);
+        }
     }
 
     public void setCommandHandler(SqlCommandHandler commandHandler) {
