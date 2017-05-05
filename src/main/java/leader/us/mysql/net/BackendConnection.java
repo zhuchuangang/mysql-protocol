@@ -22,6 +22,7 @@ public class BackendConnection extends NioConnection {
     private static Logger logger = LogManager.getLogger(BackendConnection.class);
     private DirectByteBufferPool pool;
     private SystemConfig config;
+    private BackendHandler backendHandler;
 
     public BackendConnection(SocketChannel socketChannel, SystemConfig config, DirectByteBufferPool bufferPool) {
         super(socketChannel);
@@ -36,7 +37,6 @@ public class BackendConnection extends NioConnection {
         handshake.read(chunk.getBuffer());
         pool.recycleChunk(chunk);
         logger.info(handshake);
-
 
         AuthPacket ap = new AuthPacket();
         int len1 = handshake.authPluginDataPart1.length;
@@ -55,9 +55,18 @@ public class BackendConnection extends NioConnection {
         ap.username = config.getUsername();
         ap.database = config.getDatabase();
         ap.authPluginName = handshake.authPluginName;
+        logger.info(ap);
         chunk = pool.getChunk(ap.calcPacketSize() + 4);
         ap.write(chunk.getBuffer());
         chunk.getBuffer().flip();
         return chunk;
+    }
+
+    public void setBackendHandler(BackendHandler backendHandler) {
+        this.backendHandler = backendHandler;
+    }
+
+    public BackendHandler getBackendHandler() {
+        return backendHandler;
     }
 }

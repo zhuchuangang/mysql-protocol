@@ -78,7 +78,9 @@ public class NioConnector extends Thread {
                         e.printStackTrace();
                     }
                     int index = ThreadLocalRandom.current().nextInt(reactors.length);
-                    BackendConnection connection = new BackendConnection(socketChannel,config, pool);
+                    BackendConnection connection = new BackendConnection(socketChannel, config, pool);
+                    BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
+                    connectionPool.addConnection(connection);
                     reactors[index].postRegister(connection);
                 }
                 iterator.remove();

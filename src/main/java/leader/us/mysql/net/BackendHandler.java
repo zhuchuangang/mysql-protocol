@@ -19,23 +19,46 @@ public class BackendHandler extends NioHandler {
 
     public BackendHandler(Selector selector, BackendConnection connection, DirectByteBufferPool bufferPool) throws IOException {
         super(selector, connection, bufferPool);
+        connection.setBackendHandler(this);
     }
 
     @Override
     public void run() {
-
+        try {
+            if (this.selectionKey.isReadable()) {
+                doReadData();
+            } else if (this.selectionKey.isWritable()) {
+                doWriteData();
+            }
+        } catch (IOException e) {
+            //e.printStackTrace();
+        }
     }
 
     @Override
     public void onConnection(SocketChannel socketChannel) throws IOException {
         logger.info("{} connection is connected,socket channel is {}", Thread.currentThread().getName(), socketChannel);
-//        HandshakePacket handshake = FakeMysqlServer.getInstance().response();
-//        logger.info(handshake);
-//        Chunk chunk = bufferPool.getChunk(handshake.calcPacketSize() + 4);
-//        handshake.write(chunk.getBuffer());
-//        chunk.getBuffer().flip();
         BackendConnection c = (BackendConnection) connection;
         Chunk chunk = c.authentication();
         writeData(chunk);
+    }
+
+    @Override
+    public void doReadData() throws IOException {
+        Chunk chunk = bufferPool.getChunk(1024);
+        int readNum = this.connection.getSocketChannel().read(chunk.getBuffer());
+        chunk.getBuffer().flip();
+        if (readNum == 0) {
+            return;
+        }
+        if (readNum == -1) {
+            this.connection.getSocketChannel().socket().close();
+            this.connection.getSocketChannel().close();
+            selectionKey.cancel();
+            return;
+        }
+
+        //chunk = commandHandler.response(chunk, this.connection.getSocketChannel(), this);
+        //writeData(chunk);
     }
 }

@@ -5,6 +5,7 @@ import leader.us.mysql.protocol.packet.CommandPacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -18,7 +19,19 @@ public class NormalSchemaSqlCommandHandler implements SqlCommandHandler {
     public Chunk response(Chunk chunk, SocketChannel socketChannel, FrontendHandler handler) {
         CommandPacket cp = new CommandPacket();
         cp.read(chunk.getBuffer());
+        chunk.getBuffer().flip();
         logger.debug(cp);
+
+        BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
+        BackendConnection connection = connectionPool.connection();
+        if (connection != null) {
+            BackendHandler backendHandler = connection.getBackendHandler();
+            try {
+                backendHandler.writeData(chunk);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         return null;
     }
 }

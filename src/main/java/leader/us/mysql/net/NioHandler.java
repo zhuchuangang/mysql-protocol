@@ -96,7 +96,7 @@ public abstract class NioHandler implements Runnable {
 
     public void writeToChannel(Chunk chunk) throws IOException {
         int writeNum = this.connection.getSocketChannel().write(chunk.getBuffer());
-        System.out.println("write num:" + writeNum);
+        //System.out.println("write num:" + writeNum);
         if (chunk.getBuffer().hasRemaining()) {
             selectionKey.interestOps(SelectionKey.OP_WRITE);
             this.selector.wakeup();
@@ -106,13 +106,13 @@ public abstract class NioHandler implements Runnable {
                 bufferPool.recycleChunk(chunk);
             }
         } else {
-            System.out.println("finish writing byteBuffer");
+            //System.out.println("finish writing byteBuffer");
             if (bufferQueue.isEmpty()) {
-                System.out.println("bufferQueue is empty");
+                //System.out.println("bufferQueue is empty");
                 selectionKey.interestOps(SelectionKey.OP_READ);
                 this.selector.wakeup();
             } else {
-                System.out.println("write bufferQueue");
+                //System.out.println("write bufferQueue");
                 Chunk curchunk = bufferQueue.removeFirst();
                 writeToChannel(curchunk);
             }
