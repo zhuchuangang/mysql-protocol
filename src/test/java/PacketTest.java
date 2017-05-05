@@ -1,11 +1,10 @@
-package leader.us.mysql;
-
 import leader.us.mysql.protocol.constants.CapabilityFlags;
 import leader.us.mysql.protocol.constants.CommandTypes;
 import leader.us.mysql.protocol.constants.StatusFlags;
 import leader.us.mysql.protocol.packet.*;
 import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.SecurityUtil;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +20,8 @@ import java.security.NoSuchAlgorithmException;
  * Created by zcg on 2017/4/2.
  */
 public class PacketTest {
-    public static void main(String[] args) {
+    @Test
+    public void test() {
         String host = "127.0.0.1";
         int port = 3306;
         String username = "root";

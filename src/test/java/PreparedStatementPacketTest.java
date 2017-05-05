@@ -1,15 +1,12 @@
-package leader.us.mysql;
-
 import leader.us.mysql.protocol.constants.ClientCapabilityFlags;
 import leader.us.mysql.protocol.constants.CommandTypes;
-import leader.us.mysql.protocol.constants.StatusFlags;
 import leader.us.mysql.protocol.packet.AuthPacket;
-import leader.us.mysql.protocol.packet.EOFPacket;
 import leader.us.mysql.protocol.packet.HandshakePacket;
-import leader.us.mysql.protocol.packet.MySQLPacket;
-import leader.us.mysql.protocol.packet.mutli.MultiResultSetContext;
+import leader.us.mysql.protocol.packet.StmtExecutePacket;
+import leader.us.mysql.protocol.packet.StmtPreparePacket;
 import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.SecurityUtil;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,8 +15,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * test 1:
@@ -63,17 +59,15 @@ import java.util.List;
  * select @c;
  * DROP TABLE ins;
  */
-public class StoredProcedurePacketTest {
-    public static void main(String[] args) throws IOException {
+public class PreparedStatementPacketTest {
+    @Test
+    public void test() throws Exception{
         String ip = "127.0.0.1";
         int port = 3306;
         String username = "root";
         String password = "123456";
         String database = "uaa";
-        List<String> sqls = new ArrayList<>();
-        sqls.add("CALL multi();");
-//        sqls.add("CALL multi_out(1,2,@c);");
-//        sqls.add("select @c;");
+        String sql = "select * from users where id=? and username=?;";
 
         InetSocketAddress address = new InetSocketAddress(ip, port);
         Socket socket = new Socket();
@@ -110,53 +104,41 @@ public class StoredProcedurePacketTest {
         ByteBuffer apBuffer = ByteBuffer.allocate(ap.calcPacketSize() + 4);
         ap.write(apBuffer);
         out.write(apBuffer.array());
+        out.flush();
 
         data = new byte[1024];
         in.read(data);
 
-
         if (data[4] == 0x00) {
-            for (String sql : sqls) {
-                System.out.println("exec " + sql);
-                ByteBuffer cp = ByteBuffer.allocate(sql.length() + 5);
-                BufferUtil.writeUB3(cp, sql.length());
-                cp.put((byte) 0);
-                cp.put(CommandTypes.COM_QUERY);
-                cp.put(sql.getBytes());
-                out.write(cp.array());
+            ByteBuffer cp = ByteBuffer.allocate(sql.length() + 5);
+            BufferUtil.writeUB3(cp, sql.length());
+            cp.put((byte) 0);
+            cp.put(CommandTypes.COM_STMT_PREPARE);
+            cp.put(sql.getBytes());
+            out.write(cp.array());
+            out.flush();
 
-                for (; ; ) {
-                    System.out.println("for ;;");
-                    byte[] resultByte = new byte[1024];
-                    int readSize = in.read(resultByte);
-                    ByteBuffer mrs = ByteBuffer.wrap(resultByte, 0, readSize);
+            data = new byte[1024];
+            int readNumber = in.read(data);
+            ByteBuffer psbb = ByteBuffer.allocate(readNumber);
+            System.arraycopy(data, 0, psbb.array(), 0, readNumber);
+            StmtPreparePacket sp = new StmtPreparePacket();
+            sp.read(psbb);
+            System.out.println(sp);
 
-                    MultiResultSetContext context = new MultiResultSetContext();
-                    List<MySQLPacket> packets = context.read(mrs);
-                    boolean moreResults = false;
-                    for (int i = 0; i < packets.size(); i++) {
-                        MySQLPacket p = packets.get(i);
-                        System.out.println(p);
-                        if (i == packets.size() - 1) {
-                            if (p instanceof EOFPacket) {
-                                int flag = (((EOFPacket) p).statusFlags) & StatusFlags.SERVER_MORE_RESULTS_EXISTS.getCode();
-                                if (flag == StatusFlags.SERVER_MORE_RESULTS_EXISTS.getCode()) {
-                                    moreResults = true;
-                                    System.out.println("more results");
-                                }
-                            } else {
-                                moreResults = false;
-                                System.out.println("no more results");
-                            }
-                        }
-                    }
-                    if (!moreResults) {
-                        System.out.println("break...");
-                        break;
-                    }
-                }
-                System.out.println("================" + sql + "================");
-            }
+
+            StmtExecutePacket se = new StmtExecutePacket();
+            se.packetSequenceId = 0;
+            se.statementId = sp.stmtPrepareOKPacket.statementId;
+            se.flags = 0;
+            se.paramCount = sp.stmtPrepareOKPacket.parametersNumber;
+            se.sendType = false;
+            se.params = Arrays.asList("1", "admin");
+            ByteBuffer sebb = ByteBuffer.allocate(se.calcPacketSize() + 4);
+            se.write(sebb);
+            data = sebb.array();
+            out.write(data);
+            out.flush();
         }
         if (data[4] == (byte) 0xff) {
             System.out.println("error");
