@@ -113,8 +113,8 @@ public abstract class NioHandler implements Runnable {
                 this.selector.wakeup();
             } else {
                 //System.out.println("write bufferQueue");
-                Chunk curchunk = bufferQueue.removeFirst();
-                writeToChannel(curchunk);
+                Chunk curChunk = bufferQueue.removeFirst();
+                writeToChannel(curChunk);
             }
         }
     }

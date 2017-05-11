@@ -2,6 +2,7 @@ package leader.us.mysql.protocol.packet;
 
 import leader.us.mysql.protocol.constants.CommandTypes;
 import leader.us.mysql.protocol.support.BufferUtil;
+import leader.us.mysql.protocol.support.MySQLMessage;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
  */
 public class StmtExecutePacket extends MySQLPacket {
 
+    public int header;
     public int statementId;
     public int flags;
     public int paramCount;
@@ -31,8 +33,18 @@ public class StmtExecutePacket extends MySQLPacket {
     public List<String> params;
 
 
-    @Override
-    public void write(ByteBuffer buffer) {
+    @Override public void read(ByteBuffer buffer) {
+        MySQLMessage m=new MySQLMessage(buffer);
+        this.packetLength= m.readUB3();
+        this.packetSequenceId=m.read();
+        this.header=m.read();
+        this.statementId=m.readUB4();
+        this.flags=m.read();
+        m.move(4);
+
+    }
+
+    @Override public void write(ByteBuffer buffer) {
         BufferUtil.writeUB3(buffer, calcPacketSize());
         buffer.put(packetSequenceId);
         buffer.put(CommandTypes.COM_STMT_EXECUTE);
@@ -67,8 +79,7 @@ public class StmtExecutePacket extends MySQLPacket {
      * for each parameter (i.e param_count times)
      * byte<n> binary parameter value
      */
-    @Override
-    public int calcPacketSize() {
+    @Override public int calcPacketSize() {
         int size = 11;
         if (paramCount > 0) {
             size += (paramCount + 7) / 8;
@@ -82,8 +93,7 @@ public class StmtExecutePacket extends MySQLPacket {
         return size;
     }
 
-    @Override
-    public String getPacketInfo() {
+    @Override public String getPacketInfo() {
         return null;
     }
 }

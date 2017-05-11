@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by zcg on 2017/3/25.
@@ -21,6 +23,7 @@ public class FrontendHandler extends NioHandler {
 
     private static Logger logger = LogManager.getLogger(FrontendHandler.class);
     private SqlCommandHandler commandHandler;
+    private Session session = new Session();
 
     public FrontendHandler(Selector selector, FrontendConnection connection, DirectByteBufferPool bufferPool) throws IOException {
         super(selector, connection, bufferPool);
@@ -74,6 +77,10 @@ public class FrontendHandler extends NioHandler {
         if (chunk != null) {
             writeData(chunk);
         }
+    }
+
+    public Session getSession() {
+        return session;
     }
 
     public void setCommandHandler(SqlCommandHandler commandHandler) {

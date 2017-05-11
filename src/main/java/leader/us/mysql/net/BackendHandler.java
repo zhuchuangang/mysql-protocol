@@ -3,6 +3,7 @@ package leader.us.mysql.net;
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
 import leader.us.mysql.protocol.packet.HandshakePacket;
+import leader.us.mysql.protocol.packet.StmtPrepareOKPacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,6 +50,7 @@ public class BackendHandler extends NioHandler {
         Chunk chunk = bufferPool.getChunk(1024);
         int readNum = this.connection.getSocketChannel().read(chunk.getBuffer());
         chunk.getBuffer().flip();
+
         if (readNum == 0) {
             return;
         }
@@ -60,6 +62,13 @@ public class BackendHandler extends NioHandler {
         }
 
         if (frontendHandler != null) {
+            if (frontendHandler.getSession().getStmtPrepare()) {
+                StmtPrepareOKPacket sp = new StmtPrepareOKPacket();
+                sp.read(chunk.getBuffer());
+                frontendHandler.getSession().getStmtIdParamCount().put(sp.statementId, sp.parametersNumber);
+                chunk.getBuffer().position(0);
+                frontendHandler.getSession().setStmtPrepare(false);
+            }
             frontendHandler.writeData(chunk);
         }
     }
