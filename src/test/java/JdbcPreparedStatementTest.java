@@ -15,13 +15,14 @@ public class JdbcPreparedStatementTest {
             String username = "root";
             String password = "123456";
             Connection con = DriverManager.getConnection(url, username, password);
-            String sql = "SELECT * FROM users WHERE username=?";
+            String sql = "SELECT * FROM users WHERE username=?;";
+            //Statement s=con.createStatement();
             PreparedStatement pstmt = con.prepareStatement(sql);
             pstmt.setString(1, "admin");
             ResultSet resultSet = pstmt.executeQuery();
             while (resultSet.next()) {
                 //Retrieve by column name
-                String id = resultSet.getString("id");
+                int id = resultSet.getInt("id");
                 String u = resultSet.getString("username");
                 String p = resultSet.getString("password");
                 //Display values

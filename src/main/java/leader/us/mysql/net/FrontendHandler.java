@@ -29,6 +29,10 @@ public class FrontendHandler extends NioHandler {
 
     @Override
     public void run() {
+        if (!this.selectionKey.isValid()) {
+            logger.debug("select-key cancelled");
+            return;
+        }
         try {
             if (this.selectionKey.isReadable()) {
                 doReadData();

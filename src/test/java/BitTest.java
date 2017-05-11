@@ -61,4 +61,16 @@ public class BitTest {
     public void noxTest() {
         System.out.println((1 ^ 1) > 0);
     }
+
+    public void forTest() {
+        for (int i=0;i<10 ;i++ ) {
+            System.out.println("1");
+        }
+    }
+
+    public void whileTest() {
+        while (true) {
+            System.out.println("2");
+        }
+    }
 }

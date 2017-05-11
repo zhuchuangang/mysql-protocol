@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class FakeMysqlServer {
 
-    public static final String SERVER_VERSION = "fake-mysql-server-v1.0";
+    public static final String SERVER_VERSION = "10.1.14-mysql-fake-v1.0";//"fake-mysql-server-v1.0";
     private static FakeMysqlServer mysqlServer;
     private HandshakePacket handshake;
     private AtomicInteger count = new AtomicInteger(0);
