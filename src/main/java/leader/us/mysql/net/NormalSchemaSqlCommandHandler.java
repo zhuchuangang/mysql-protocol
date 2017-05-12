@@ -3,11 +3,13 @@ package leader.us.mysql.net;
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.protocol.packet.CommandPacket;
 import leader.us.mysql.protocol.packet.StmtExecutePacket;
+import leader.us.mysql.protocol.support.MySQLMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
+import java.util.Map;
 
 /**
  * Created by zcg on 2017/5/4.
@@ -19,19 +21,28 @@ public class NormalSchemaSqlCommandHandler implements SqlCommandHandler {
     @Override
     public Chunk response(Chunk chunk, SocketChannel socketChannel, FrontendHandler handler) {
         byte packetType = chunk.getBuffer().get(4);
+        //COM_STMT_PREPARE
         if (packetType == 0x16) {
             handler.getSession().setStmtPrepare(true);
         }
-//        if (chunk.getBuffer().get(4) == 0x17) {
-//            StmtExecutePacket sep = new StmtExecutePacket();
-//            sep.read(chunk.getBuffer());
-//            logger.debug(sep);
-//        } else {
-        CommandPacket cp = new CommandPacket();
-        cp.read(chunk.getBuffer());
-        logger.debug(cp);
-//        }
-        chunk.getBuffer().flip();
+        //COM_STMT_EXECUTE
+        if (packetType == 0x17) {
+            MySQLMessage mm = new MySQLMessage(chunk.getBuffer());
+            mm.move(5);
+            int statementId = mm.readUB4();
+            chunk.getBuffer().position(0);
+            StmtExecutePacket sep = new StmtExecutePacket();
+            Map<Integer, Integer> spm = handler.getSession().getStmtIdParamCount();
+            sep.paramCount = spm.get(statementId);
+            sep.read(chunk.getBuffer());
+            logger.debug(sep);
+        } else {
+            CommandPacket cp = new CommandPacket();
+            cp.read(chunk.getBuffer());
+            logger.debug(cp);
+        }
+        chunk.getBuffer().position(0);
+
 
         BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
         BackendConnection connection = connectionPool.connection();

@@ -5,7 +5,7 @@ import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.MySQLMessage;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -29,22 +29,42 @@ public class StmtExecutePacket extends MySQLPacket {
     public int statementId;
     public int flags;
     public int paramCount;
-    public boolean sendType;
+    public byte sendType;
+    public byte[] nullBitmap;
+    public List<Map> fieldTypes;
     public List<String> params;
 
 
-    @Override public void read(ByteBuffer buffer) {
-        MySQLMessage m=new MySQLMessage(buffer);
-        this.packetLength= m.readUB3();
-        this.packetSequenceId=m.read();
-        this.header=m.read();
-        this.statementId=m.readUB4();
-        this.flags=m.read();
+    @Override
+    public void read(ByteBuffer buffer) {
+        MySQLMessage m = new MySQLMessage(buffer);
+        this.packetLength = m.readUB3();
+        this.packetSequenceId = m.read();
+        this.header = m.read();
+        this.statementId = m.readUB4();
+        this.flags = m.read();
         m.move(4);
-
+        this.sendType= m.read();
+        if (paramCount > 0) {
+            int bitmapSize = (paramCount + 7) / 8;
+            nullBitmap = m.readBytes(bitmapSize);
+            fieldTypes=new ArrayList<>();
+            for (int i = 0; i < paramCount; i++) {
+                byte fieldType = m.read();
+                byte parameterFlag = m.read();
+                Map t = new HashMap();
+                t.put(fieldType, parameterFlag);
+                fieldTypes.add(t);
+            }
+            params = new ArrayList<>();
+            for (int i = 0; i < paramCount; i++) {
+                params.add(m.readStringWithLength());
+            }
+        }
     }
 
-    @Override public void write(ByteBuffer buffer) {
+    @Override
+    public void write(ByteBuffer buffer) {
         BufferUtil.writeUB3(buffer, calcPacketSize());
         buffer.put(packetSequenceId);
         buffer.put(CommandTypes.COM_STMT_EXECUTE);
@@ -57,7 +77,6 @@ public class StmtExecutePacket extends MySQLPacket {
                 buffer.put((byte) 0x0);
             }
         }
-        buffer.put((byte) (sendType ? 1 : 0));
         for (int i = 0; i < paramCount; i++) {
             BufferUtil.writeWithLength(buffer, params.get(i).getBytes());
         }
@@ -79,13 +98,12 @@ public class StmtExecutePacket extends MySQLPacket {
      * for each parameter (i.e param_count times)
      * byte<n> binary parameter value
      */
-    @Override public int calcPacketSize() {
+    @Override
+    public int calcPacketSize() {
         int size = 11;
         if (paramCount > 0) {
             size += (paramCount + 7) / 8;
-            if (sendType) {
-                size += paramCount * 2;
-            }
+            size += paramCount * 2;
             for (String p : params) {
                 size += BufferUtil.getLength(p.getBytes());
             }
@@ -93,7 +111,24 @@ public class StmtExecutePacket extends MySQLPacket {
         return size;
     }
 
-    @Override public String getPacketInfo() {
+    @Override
+    public String getPacketInfo() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "StmtExecutePacket{" +
+                "packetLength=" + packetLength +
+                ", packetSequenceId=" + packetSequenceId +
+                ", header=" + header +
+                ", statementId=" + statementId +
+                ", flags=" + flags +
+                ", paramCount=" + paramCount +
+                ", sendType=" + sendType +
+                ", nullBitmap=" + Arrays.toString(nullBitmap) +
+                ", fieldTypes=" + fieldTypes +
+                ", params=" + params +
+                '}';
     }
 }

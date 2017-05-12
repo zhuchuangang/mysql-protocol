@@ -62,13 +62,7 @@ public class BackendHandler extends NioHandler {
         }
 
         if (frontendHandler != null) {
-            if (frontendHandler.getSession().getStmtPrepare()) {
-                StmtPrepareOKPacket sp = new StmtPrepareOKPacket();
-                sp.read(chunk.getBuffer());
-                frontendHandler.getSession().getStmtIdParamCount().put(sp.statementId, sp.parametersNumber);
-                chunk.getBuffer().position(0);
-                frontendHandler.getSession().setStmtPrepare(false);
-            }
+            MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
             frontendHandler.writeData(chunk);
         }
     }
