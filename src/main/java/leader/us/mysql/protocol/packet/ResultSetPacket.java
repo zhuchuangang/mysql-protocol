@@ -15,7 +15,7 @@ public class ResultSetPacket extends MySQLPacket {
 
     public EOFPacket columnsEof;
 
-    public List<ResultSetRowPacket> rows = new ArrayList<>();
+    public List<MySQLPacket> rows = new ArrayList<>();
 
     public EOFPacket rowsEof;
 
@@ -41,11 +41,17 @@ public class ResultSetPacket extends MySQLPacket {
         }
         for (; ; ) {
             buffer = buffer.slice();
-            if ((buffer.get(4) & 0xff) == 0xfe) {
+            int packetType=buffer.get(4)& 0xff;
+            if (packetType == 0xfe) {
                 rowsEof = new EOFPacket();
                 rowsEof.read(buffer);
                 break;
-            } else {
+            } else if (packetType==0x00){
+                BinaryResultSetRowPacket brsrp = new BinaryResultSetRowPacket();
+                brsrp.columns = columns;
+                brsrp.read(buffer);
+                rows.add(brsrp);
+            }else {
                 ResultSetRowPacket rsrp = new ResultSetRowPacket();
                 rsrp.columnCount = columns.size();
                 rsrp.read(buffer);
@@ -87,8 +93,6 @@ public class ResultSetPacket extends MySQLPacket {
     @Override
     public String toString() {
         return "ResultSetPacket{" +
-                "\n  packetLength=" + packetLength +
-                "\n, packetSequenceId=" + packetSequenceId +
                 "\n, columnsNumber=" + columnsNumber +
                 "\n, columns=" + columns +
                 "\n, columnsEof=" + columnsEof +

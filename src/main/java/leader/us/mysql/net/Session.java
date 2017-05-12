@@ -8,7 +8,6 @@ import java.util.Map;
  */
 public class Session {
     private Map<Integer,Integer> stmtIdParamCount=new HashMap<>();
-    private boolean stmtPrepare=false;
 
     public Map<Integer, Integer> getStmtIdParamCount() {
         return stmtIdParamCount;
@@ -16,13 +15,5 @@ public class Session {
 
     public void setStmtIdParamCount(Map<Integer, Integer> stmtIdParamCount) {
         this.stmtIdParamCount = stmtIdParamCount;
-    }
-
-    public boolean getStmtPrepare() {
-        return stmtPrepare;
-    }
-
-    public void setStmtPrepare(boolean stmtPrepare) {
-        this.stmtPrepare = stmtPrepare;
     }
 }

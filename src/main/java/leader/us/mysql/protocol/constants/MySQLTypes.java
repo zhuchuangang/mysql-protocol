@@ -1,5 +1,9 @@
 package leader.us.mysql.protocol.constants;
 
+import leader.us.mysql.protocol.support.MySQLMessage;
+
+import java.nio.ByteBuffer;
+
 /**
  * Created by zcg on 2017/4/4.
  */
@@ -34,4 +38,72 @@ public class MySQLTypes {
     public static final int MYSQL_TYPE_VAR_STRING = 0xfd;
     public static final int MYSQL_TYPE_STRING = 0xfe;
     public static final int MYSQL_TYPE_GEOMETRY = 0xff;
+
+    public static Object data(int fieldType, MySQLMessage m) {
+
+        switch (fieldType) {
+            case MYSQL_TYPE_DECIMAL:
+                return m.readDouble();
+            case MYSQL_TYPE_TINY:
+                return m.readInt();
+            case MYSQL_TYPE_SHORT:
+                return m.readInt();
+            case MYSQL_TYPE_LONG:
+                return m.readLong();
+            case MYSQL_TYPE_FLOAT:
+                return m.readFloat();
+            case MYSQL_TYPE_DOUBLE:
+                return m.readDouble();
+            case MYSQL_TYPE_NULL:
+                m.move(1);
+                return null;
+            case MYSQL_TYPE_TIMESTAMP:
+                return m.readTime();
+            case MYSQL_TYPE_LONGLONG:
+                return m.readLong();
+            case MYSQL_TYPE_INT24:
+                return m.readInt();
+            case MYSQL_TYPE_DATE:
+                return m.readTime();
+            case MYSQL_TYPE_TIME:
+                return m.readTime();
+            case MYSQL_TYPE_DATETIME:
+                return m.readTime();
+//            case MYSQL_TYPE_YEAR:
+//                return m.readUB2();
+//            case MYSQL_TYPE_NEWDATE:
+//                return m.readDouble();
+            case MYSQL_TYPE_VARCHAR:
+                return m.readStringWithLength();
+//            case MYSQL_TYPE_BIT:
+//                return m.readDouble();
+//            case MYSQL_TYPE_TIMESTAMP2:
+//                return m.readDouble();
+//            case MYSQL_TYPE_DATETIME2:
+//                return m.readDouble();
+//            case MYSQL_TYPE_TIME2:
+//                return m.readDouble();
+//            case MYSQL_TYPE_NEWDECIMAL:
+//                return m.readDouble();
+//            case MYSQL_TYPE_ENUM:
+//                return m.readDouble();
+//            case MYSQL_TYPE_SET:
+//                return m.readDouble();
+//            case MYSQL_TYPE_TINY_BLOB:
+//                return m.readDouble();
+//            case MYSQL_TYPE_MEDIUM_BLOB:
+//                return m.readDouble();
+//            case MYSQL_TYPE_LONG_BLOB:
+//                return m.readDouble();
+//            case MYSQL_TYPE_BLOB:
+//                return m.readDouble();
+//            case MYSQL_TYPE_VAR_STRING:
+//                return m.readDouble();
+//            case MYSQL_TYPE_STRING:
+//                return m.readDouble();
+//            case MYSQL_TYPE_GEOMETRY:
+//                return m.readDouble();
+        }
+        return null;
+    }
 }

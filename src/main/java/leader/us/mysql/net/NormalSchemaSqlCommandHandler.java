@@ -23,7 +23,7 @@ public class NormalSchemaSqlCommandHandler implements SqlCommandHandler {
         byte packetType = chunk.getBuffer().get(4);
         //COM_STMT_PREPARE
         if (packetType == 0x16) {
-            handler.getSession().setStmtPrepare(true);
+
         }
         //COM_STMT_EXECUTE
         if (packetType == 0x17) {
