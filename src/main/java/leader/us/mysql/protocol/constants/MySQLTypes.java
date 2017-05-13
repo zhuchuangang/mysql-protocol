@@ -42,68 +42,41 @@ public class MySQLTypes {
     public static Object data(int fieldType, MySQLMessage m) {
 
         switch (fieldType) {
+            case MYSQL_TYPE_VARCHAR:
+            case MYSQL_TYPE_BIT:
+            case MYSQL_TYPE_ENUM:
+            case MYSQL_TYPE_SET:
+            case MYSQL_TYPE_TINY_BLOB:
+            case MYSQL_TYPE_MEDIUM_BLOB:
+            case MYSQL_TYPE_LONG_BLOB:
+            case MYSQL_TYPE_BLOB:
+            case MYSQL_TYPE_VAR_STRING:
+            case MYSQL_TYPE_STRING:
+            case MYSQL_TYPE_GEOMETRY:
+//            case MYSQL_TYPE_OLDDECIMAL:
             case MYSQL_TYPE_DECIMAL:
-                return m.readDouble();
-            case MYSQL_TYPE_TINY:
-                return m.readInt();
-            case MYSQL_TYPE_SHORT:
-                return m.readInt();
-            case MYSQL_TYPE_LONG:
-                return m.readLong();
-            case MYSQL_TYPE_FLOAT:
-                return m.readFloat();
-            case MYSQL_TYPE_DOUBLE:
-                return m.readDouble();
-            case MYSQL_TYPE_NULL:
-                m.move(1);
-                return null;
+                return m.readStringWithLength();
+            case MYSQL_TYPE_TIME:
+            case MYSQL_TYPE_DATE:
+            case MYSQL_TYPE_DATETIME:
+                return m.readDate();
             case MYSQL_TYPE_TIMESTAMP:
                 return m.readTime();
             case MYSQL_TYPE_LONGLONG:
                 return m.readLong();
-            case MYSQL_TYPE_INT24:
+            case MYSQL_TYPE_LONG:
                 return m.readInt();
-            case MYSQL_TYPE_DATE:
-                return m.readTime();
-            case MYSQL_TYPE_TIME:
-                return m.readTime();
-            case MYSQL_TYPE_DATETIME:
-                return m.readTime();
-//            case MYSQL_TYPE_YEAR:
-//                return m.readUB2();
-//            case MYSQL_TYPE_NEWDATE:
-//                return m.readDouble();
-            case MYSQL_TYPE_VARCHAR:
-                return m.readStringWithLength();
-//            case MYSQL_TYPE_BIT:
-//                return m.readDouble();
-//            case MYSQL_TYPE_TIMESTAMP2:
-//                return m.readDouble();
-//            case MYSQL_TYPE_DATETIME2:
-//                return m.readDouble();
-//            case MYSQL_TYPE_TIME2:
-//                return m.readDouble();
-//            case MYSQL_TYPE_NEWDECIMAL:
-//                return m.readDouble();
-//            case MYSQL_TYPE_ENUM:
-//                return m.readDouble();
-//            case MYSQL_TYPE_SET:
-//                return m.readDouble();
-//            case MYSQL_TYPE_TINY_BLOB:
-//                return m.readDouble();
-//            case MYSQL_TYPE_MEDIUM_BLOB:
-//                return m.readDouble();
-//            case MYSQL_TYPE_LONG_BLOB:
-//                return m.readDouble();
-//            case MYSQL_TYPE_BLOB:
-//                return m.readDouble();
-//            case MYSQL_TYPE_VAR_STRING:
-//                return m.readDouble();
-//            case MYSQL_TYPE_STRING:
-//                return m.readDouble();
-//            case MYSQL_TYPE_GEOMETRY:
-//                return m.readDouble();
+//            case MYSQL_TYPE_SMALLINT:
+            case MYSQL_TYPE_YEAR:
+                return m.readUB2();
+            case MYSQL_TYPE_TINY:
+                return m.read();
+            case MYSQL_TYPE_DOUBLE:
+                return m.readDouble();
+            case MYSQL_TYPE_FLOAT:
+                return m.readFloat();
+            default:
+                return null;
         }
-        return null;
     }
 }

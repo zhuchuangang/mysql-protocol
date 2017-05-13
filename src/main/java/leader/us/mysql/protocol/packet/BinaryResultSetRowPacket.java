@@ -18,17 +18,26 @@ public class BinaryResultSetRowPacket extends MySQLPacket {
 
     public int header;
 
+    public byte[] nullBitmap;
+
     @Override
     public void read(ByteBuffer buffer) {
         MySQLMessage message = new MySQLMessage(buffer);
         packetLength = message.readUB3();
         packetSequenceId = message.read();
         header = message.read();
-        message.move(6);
+        if (columns != null && columns.size() > 0) {
+            int size = (columns.size() + 9) / 8;
+            nullBitmap = message.readBytes(size);
+        }
         if (columns != null && columns.size() > 0) {
             for (int i = 0; i < columns.size(); i++) {
-                ColumnPacket cp=columns.get(i);
-                values.add(MySQLTypes.data(cp.type,message));
+                if ((nullBitmap[(i + 2) / 8] & (1 << ((i + 2) % 8))) > 0) {
+                    values.add("null");
+                }else {
+                    ColumnPacket cp = columns.get(i);
+                    values.add(MySQLTypes.data(cp.type, message));
+                }
             }
         }
     }

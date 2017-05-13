@@ -47,10 +47,10 @@ public class MysqlResponseHandler {
                     ERRPacket errp = new ERRPacket();
                     errp.read(buffer);
                     break;
-//                default:
-//                    ResultSetPacket rsp = new ResultSetPacket();
-//                    rsp.read(buffer);
-//                    logger.debug(rsp);
+                default:
+                    ResultSetPacket rsp = new ResultSetPacket();
+                    rsp.read(buffer);
+                    logger.debug(rsp);
             }
         }
         buffer.position(0);

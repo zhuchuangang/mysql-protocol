@@ -44,20 +44,20 @@ public class JdbcPreparedStatementTest {
             String username = "root";
             String password = "123456";
             Connection con = DriverManager.getConnection(url, username, password);
-            String sql = "SELECT * FROM roles WHERE id=?;";
+            String sql = "SELECT * FROM test where id=?;";
             //Statement s=con.createStatement();
             PreparedStatement pstmt = con.prepareStatement(sql);
-            pstmt.setInt(1, 1);
+            pstmt.setInt(1, 0);
             ResultSet resultSet = pstmt.executeQuery();
             while (resultSet.next()) {
                 //Retrieve by column name
                 int id = resultSet.getInt("id");
-                String appkey = resultSet.getString("appkey");
-                String name = resultSet.getString("name");
+                String v1 = resultSet.getString("c1");
+                String v2 = resultSet.getString("c2");
                 //Display values
                 System.out.print("id: " + id);
-                System.out.print(", appkey: " + appkey);
-                System.out.println(", name: " + name);
+                System.out.print(", v1: " + v1);
+                System.out.println(", v2: " + v2);
             }
         } catch (Exception se) {
             se.printStackTrace();

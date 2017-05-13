@@ -181,6 +181,7 @@ public class MySQLMessage {
         return Double.longBitsToDouble(readLong());
     }
 
+
     /**
      * 读取报文长度
      *
