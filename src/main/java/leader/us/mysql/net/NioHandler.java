@@ -11,6 +11,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -87,7 +88,6 @@ public abstract class NioHandler implements Runnable {
                 bufferQueue.add(chunk);
                 writeToChannel(writeChunk);
             }
-            writeToChannel(chunk);
         } finally {
             writeFlag.lazySet(false);
         }
