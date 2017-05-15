@@ -35,6 +35,9 @@ public class MysqlResponseHandler {
                     break;
                 //LOCAL_INFILE packet
                 case 0xfb:
+                    LocalInfilePacket lip = new LocalInfilePacket();
+                    lip.read(buffer);
+                    logger.debug(lip);
                     break;
                 //EOF packet
                 case 0xfe:
