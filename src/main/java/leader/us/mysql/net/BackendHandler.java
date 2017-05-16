@@ -2,7 +2,9 @@ package leader.us.mysql.net;
 
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
+import leader.us.mysql.protocol.packet.*;
 import leader.us.mysql.protocol.support.BufferUtil;
+import leader.us.mysql.protocol.support.MySQLMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -68,50 +70,107 @@ public class BackendHandler extends NioHandler {
 //        }
 //    }
 
-    private volatile int packetLength = 0;
-    private byte[] lengthByte;
+//    private volatile int packetLength = 0;
+//    private byte[] lengthByte;
+//
+//    @Override
+//    public void doReadData() throws IOException {
+//        SocketChannel channel = this.connection.getSocketChannel();
+//        lengthByte = new byte[3];
+//        ByteBuffer b = ByteBuffer.wrap(lengthByte);
+//        if (packetLength == 0) {
+//            int readNum = channel.read(b);
+//            logger.debug("1.read packet length byte is " + readNum);
+//            if (readNum == 0) {
+//                return;
+//            }
+//            if (readNum == -1) {
+//                this.connection.getSocketChannel().socket().close();
+//                this.connection.getSocketChannel().close();
+//                selectionKey.cancel();
+//                return;
+//            }
+//            int length = lengthByte[0] & 0xff;
+//            length |= (lengthByte[1] & 0xff) << 8;
+//            length |= (lengthByte[2] & 0xff) << 16;
+//            packetLength = length;
+//            logger.debug("2.read packet length is " + packetLength);
+//            return;
+//        } else {
+//            logger.debug("3.packetLength is " + packetLength);
+//            Chunk chunk = bufferPool.getChunk(packetLength + 4);
+//            BufferUtil.writeUB3(chunk.getBuffer(), packetLength);
+//            packetLength = 0;
+//
+//            int readNum = channel.read(chunk.getBuffer());
+//            logger.debug("4.packetLength is " + packetLength + ",read packet body is " + readNum + ",chuck buffer size is " + chunk.getBuffer().capacity());
+//            if (readNum == 0) {
+//                return;
+//            }
+//            if (readNum == -1) {
+//                this.connection.getSocketChannel().socket().close();
+//                this.connection.getSocketChannel().close();
+//                selectionKey.cancel();
+//                return;
+//            }
+//
+//            chunk.getBuffer().flip();
+//            if (frontendHandler != null) {
+//                //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
+//                frontendHandler.writeData(chunk);
+//            }
+//        }
+//    }
 
     @Override
     public void doReadData() throws IOException {
         SocketChannel channel = this.connection.getSocketChannel();
-        lengthByte = new byte[3];
-        ByteBuffer b = ByteBuffer.wrap(lengthByte);
-        if (packetLength == 0) {
-            int readNum = channel.read(b);
-            logger.debug("1.read packet length byte is " + readNum);
-            if (readNum == 0) {
-                return;
-            }
-            if (readNum == -1) {
-                this.connection.getSocketChannel().socket().close();
-                this.connection.getSocketChannel().close();
-                selectionKey.cancel();
-                return;
-            }
-            int length = lengthByte[0] & 0xff;
-            length |= (lengthByte[1] & 0xff) << 8;
-            length |= (lengthByte[2] & 0xff) << 16;
-            packetLength = length;
-            logger.debug("2.read packet length is " + packetLength);
+        byte[] lengthByte = new byte[5];
+        ByteBuffer lbb = ByteBuffer.wrap(lengthByte);
+        int readNum = channel.read(lbb);
+        if (readNum == 0) {
             return;
-        } else {
-            logger.debug("3.packetLength is " + packetLength);
-            Chunk chunk = bufferPool.getChunk(packetLength + 4);
-            BufferUtil.writeUB3(chunk.getBuffer(), packetLength);
-            packetLength = 0;
+        }
+        if (readNum == -1) {
+            this.connection.getSocketChannel().socket().close();
+            this.connection.getSocketChannel().close();
+            selectionKey.cancel();
+            return;
+        }
+        int packetLength = lengthByte[0] & 0xff;
+        packetLength |= (lengthByte[1] & 0xff) << 8;
+        packetLength |= (lengthByte[2] & 0xff) << 16;
+        int packetType = lengthByte[4];
 
-            int readNum = channel.read(chunk.getBuffer());
-            logger.debug("4.packetLength is " + packetLength + ",read packet body is " + readNum + ",chuck buffer size is " + chunk.getBuffer().capacity());
-            if (readNum == 0) {
-                return;
-            }
-            if (readNum == -1) {
-                this.connection.getSocketChannel().socket().close();
-                this.connection.getSocketChannel().close();
-                selectionKey.cancel();
-                return;
-            }
+        Chunk chunk = null;
+        chunk = bufferPool.getChunk(packetLength + 4);
+        chunk.getBuffer().put(lengthByte);
+        channel.read(chunk.getBuffer());
 
+//        switch (packetType) {
+//            //OK packet
+//            case 0x00:
+//                //LOCAL_INFILE packet
+//            case 0xfb:
+//                //EOF packet
+//            case 0xfe:
+//                //ERROR packet
+//            case 0xff:
+//                chunk = bufferPool.getChunk(packetLength + 4);
+//                chunk.getBuffer().put(lengthByte);
+//                channel.read(chunk.getBuffer());
+//                break;
+//            //ResultSet
+//            default:
+//                int length = lengthByte[4] & 0xff;
+//                MySQLMessage m = new MySQLMessage(chunk.getBuffer());
+//                m.move(4);
+//                long columnsNumber = m.readLength();
+//
+//
+//        }
+
+        if (chunk != null) {
             chunk.getBuffer().flip();
             if (frontendHandler != null) {
                 //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
