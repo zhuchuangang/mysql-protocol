@@ -70,66 +70,53 @@ public class BackendHandler extends NioHandler {
 
     private volatile int packetLength = 0;
     private byte[] lengthByte;
-    private AtomicBoolean reading = new AtomicBoolean(false);
 
     @Override
     public void doReadData() throws IOException {
-        while (!reading.compareAndSet(false, true)) {
-
-        }
-        try {
-            SocketChannel channel = this.connection.getSocketChannel();
-            lengthByte = new byte[3];
-            ByteBuffer b = ByteBuffer.wrap(lengthByte);
-            if (packetLength == 0) {
-                int readNum = channel.read(b);
-                logger.debug("1.read packet length byte is "+readNum);
-                if (readNum == 0) {
-                    reading.lazySet(false);
-                    return;
-                }
-                if (readNum == -1) {
-                    this.connection.getSocketChannel().socket().close();
-                    this.connection.getSocketChannel().close();
-                    selectionKey.cancel();
-                    reading.lazySet(false);
-                    return;
-                }
-                int length = lengthByte[0] & 0xff;
-                length |= (lengthByte[1] & 0xff) << 8;
-                length |= (lengthByte[2] & 0xff) << 16;
-                packetLength = length;
-                logger.debug("2.read packet length is "+packetLength);
-                reading.lazySet(false);
+        SocketChannel channel = this.connection.getSocketChannel();
+        lengthByte = new byte[3];
+        ByteBuffer b = ByteBuffer.wrap(lengthByte);
+        if (packetLength == 0) {
+            int readNum = channel.read(b);
+            logger.debug("1.read packet length byte is " + readNum);
+            if (readNum == 0) {
                 return;
-            } else {
-                logger.debug("3.packetLength is "+packetLength);
-                Chunk chunk = bufferPool.getChunk(packetLength + 4);
-                BufferUtil.writeUB3(chunk.getBuffer(), packetLength);
-                packetLength = 0;
-
-                int readNum = channel.read(chunk.getBuffer());
-                logger.debug("4.packetLength is "+packetLength+",read packet body is "+readNum+",chuck buffer size is "+chunk.getBuffer().capacity());
-                if (readNum == 0) {
-                    reading.lazySet(false);
-                    return;
-                }
-                if (readNum == -1) {
-                    this.connection.getSocketChannel().socket().close();
-                    this.connection.getSocketChannel().close();
-                    selectionKey.cancel();
-                    reading.lazySet(false);
-                    return;
-                }
-
-                chunk.getBuffer().flip();
-                if (frontendHandler != null) {
-                    //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
-                    frontendHandler.writeData(chunk);
-                }
             }
-        } finally {
-            reading.lazySet(false);
+            if (readNum == -1) {
+                this.connection.getSocketChannel().socket().close();
+                this.connection.getSocketChannel().close();
+                selectionKey.cancel();
+                return;
+            }
+            int length = lengthByte[0] & 0xff;
+            length |= (lengthByte[1] & 0xff) << 8;
+            length |= (lengthByte[2] & 0xff) << 16;
+            packetLength = length;
+            logger.debug("2.read packet length is " + packetLength);
+            return;
+        } else {
+            logger.debug("3.packetLength is " + packetLength);
+            Chunk chunk = bufferPool.getChunk(packetLength + 4);
+            BufferUtil.writeUB3(chunk.getBuffer(), packetLength);
+            packetLength = 0;
+
+            int readNum = channel.read(chunk.getBuffer());
+            logger.debug("4.packetLength is " + packetLength + ",read packet body is " + readNum + ",chuck buffer size is " + chunk.getBuffer().capacity());
+            if (readNum == 0) {
+                return;
+            }
+            if (readNum == -1) {
+                this.connection.getSocketChannel().socket().close();
+                this.connection.getSocketChannel().close();
+                selectionKey.cancel();
+                return;
+            }
+
+            chunk.getBuffer().flip();
+            if (frontendHandler != null) {
+                //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
+                frontendHandler.writeData(chunk);
+            }
         }
     }
 
