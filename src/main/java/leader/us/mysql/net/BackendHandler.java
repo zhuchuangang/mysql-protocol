@@ -128,6 +128,7 @@ public class BackendHandler extends NioHandler {
         byte[] lengthByte = new byte[5];
         ByteBuffer lbb = ByteBuffer.wrap(lengthByte);
         int readNum = channel.read(lbb);
+        logger.debug("read num is {}", readNum);
         if (readNum == 0) {
             return;
         }
@@ -140,12 +141,37 @@ public class BackendHandler extends NioHandler {
         int packetLength = lengthByte[0] & 0xff;
         packetLength |= (lengthByte[1] & 0xff) << 8;
         packetLength |= (lengthByte[2] & 0xff) << 16;
-        int packetType = lengthByte[4];
+        int packetType = lengthByte[4] & 0xff;
 
         Chunk chunk = null;
+        logger.debug("packet length is {}", packetLength);
         chunk = bufferPool.getChunk(packetLength + 4);
+        int limit = chunk.getBuffer().limit();
+        int position = chunk.getBuffer().position();
+        if (limit - position > packetLength + 4) {
+            int offset = (limit - position) - (packetLength + 4);
+            chunk.getBuffer().limit(limit-offset);
+        }
         chunk.getBuffer().put(lengthByte);
         channel.read(chunk.getBuffer());
+
+        //=====================
+        StringBuffer sb = new StringBuffer("\n");
+        for (int i = position; i < chunk.getBuffer().limit(); i++) {
+            String t = Integer.toHexString(chunk.getBuffer().get(i) & 0xff);
+            if (t.length() == 1) {
+                t = "0" + t;
+            }
+            sb.append(t + " ");
+            if ((i + 1) % 8 == 0) {
+                sb.append(" ");
+            }
+            if ((i + 1) % 16 == 0) {
+                sb.append("\n");
+            }
+        }
+        logger.debug(sb.toString());
+        //=====================
 
 //        switch (packetType) {
 //            //OK packet
@@ -166,12 +192,10 @@ public class BackendHandler extends NioHandler {
 //                MySQLMessage m = new MySQLMessage(chunk.getBuffer());
 //                m.move(4);
 //                long columnsNumber = m.readLength();
-//
-//
 //        }
 
         if (chunk != null) {
-            chunk.getBuffer().flip();
+            chunk.getBuffer().position(position);
             if (frontendHandler != null) {
                 //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
                 frontendHandler.writeData(chunk);
