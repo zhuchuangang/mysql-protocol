@@ -8,7 +8,6 @@ import leader.us.mysql.protocol.packet.AuthPacket;
 import leader.us.mysql.protocol.packet.ERRPacket;
 import leader.us.mysql.protocol.packet.HandshakePacket;
 import leader.us.mysql.protocol.packet.OKPacket;
-import leader.us.mysql.protocol.packet.mutli.ErrorState;
 import leader.us.mysql.protocol.support.SecurityUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

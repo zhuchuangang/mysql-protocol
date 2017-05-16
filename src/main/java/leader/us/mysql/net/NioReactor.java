@@ -65,7 +65,7 @@ public class NioReactor extends Thread {
                 SelectionKey key = iterator.next();
                 NioHandler handler = (NioHandler) key.attachment();
                 if (handler != null) {
-                    executorService.execute(handler);
+                    handler.run();
                 }
                 iterator.remove();
             }

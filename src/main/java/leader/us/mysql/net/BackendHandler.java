@@ -2,8 +2,6 @@ package leader.us.mysql.net;
 
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
-import leader.us.mysql.protocol.packet.HandshakePacket;
-import leader.us.mysql.protocol.packet.StmtPrepareOKPacket;
 import leader.us.mysql.protocol.support.BufferUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,8 +10,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**

@@ -2,8 +2,6 @@ package leader.us.mysql.protocol.constants;
 
 import leader.us.mysql.protocol.support.MySQLMessage;
 
-import java.nio.ByteBuffer;
-
 /**
  * Created by zcg on 2017/4/4.
  */

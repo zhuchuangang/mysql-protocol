@@ -5,7 +5,6 @@ import leader.us.mysql.protocol.support.BufferUtil;
 import leader.us.mysql.protocol.support.MySQLMessage;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * int<1>	header	[ff] header of the ERR packet

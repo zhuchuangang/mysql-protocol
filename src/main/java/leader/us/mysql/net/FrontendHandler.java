@@ -2,19 +2,13 @@ package leader.us.mysql.net;
 
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
-import leader.us.mysql.protocol.constants.StatusFlags;
-import leader.us.mysql.protocol.packet.AuthPacket;
 import leader.us.mysql.protocol.packet.HandshakePacket;
-import leader.us.mysql.protocol.packet.OKPacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by zcg on 2017/3/25.

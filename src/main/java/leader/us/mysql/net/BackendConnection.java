@@ -2,7 +2,6 @@ package leader.us.mysql.net;
 
 import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
-import leader.us.mysql.protocol.constants.CapabilityFlags;
 import leader.us.mysql.protocol.constants.ClientCapabilityFlags;
 import leader.us.mysql.protocol.packet.AuthPacket;
 import leader.us.mysql.protocol.packet.HandshakePacket;

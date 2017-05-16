@@ -1,8 +1,6 @@
 package leader.us.mysql.net;
 
-import leader.us.mysql.bufferpool.Chunk;
 import leader.us.mysql.bufferpool.DirectByteBufferPool;
-import leader.us.mysql.protocol.packet.HandshakePacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
