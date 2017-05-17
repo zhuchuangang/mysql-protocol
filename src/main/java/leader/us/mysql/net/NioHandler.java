@@ -111,6 +111,7 @@ public abstract class NioHandler implements Runnable {
                     bufferPool.recycleChunk(chunk);
                 }
             } else {
+                bufferPool.recycleChunk(chunk);
                 //System.out.println("finish writing byteBuffer");
                 if (bufferQueue.isEmpty()) {
                     //System.out.println("bufferQueue is empty");
