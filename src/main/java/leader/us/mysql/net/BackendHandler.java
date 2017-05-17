@@ -74,6 +74,11 @@ public class BackendHandler extends NioHandler {
 //    }
 
 
+    /**
+     * 将每个packet读取到buffer中，并且一起进行输出
+     *
+     * @throws IOException
+     */
     @Override
     public void doReadData() throws IOException {
         SocketChannel channel = this.connection.getSocketChannel();
@@ -275,6 +280,123 @@ public class BackendHandler extends NioHandler {
 //            }
 //        }
 //    }
+
+
+//    @Override
+//    public void doReadData() throws IOException {
+//        SocketChannel channel = this.connection.getSocketChannel();
+//        ByteBuffer temp = ByteBuffer.allocate(8);
+//        MySQLMessage tm = new MySQLMessage(temp);
+//        int packetLength = 0;
+//        List<Chunk> chunks = new ArrayList<>();
+//        boolean firstPacket = true;
+//        boolean resultSet = false;
+//        byte packetType = 0;
+//        while (true) {
+//            //===============================================================
+//            //=====================读取packetLength===========================
+//            //===============================================================
+//            temp.clear();
+//            int readNum = channel.read(temp);
+//            logger.debug("1.read packet length byte is " + readNum);
+//            if (checkReadNum(readNum)) {
+//                break;
+//            }
+//            temp.flip();
+//            packetLength = tm.readUB3();
+//            logger.debug("2.read packet length is " + packetLength);
+//
+//            //===============================================================
+//            //=====================读取packetType=============================
+//            //===============================================================
+//            if (firstPacket) {
+//                firstPacket = false;
+//                temp.clear();
+//                temp.limit(2);
+//                readNum = channel.read(temp);
+//                if (checkReadNum(readNum)) {
+//                    break;
+//                }
+//                packetType = temp.get(1);
+//                //OK packet  0x00
+//                //LOCAL_INFILE packet 0xfb
+//                //EOF packet  0xfe
+//                //ERROR packet  0xff
+//                if ((packetType == 0x00 && packetLength > 7) ||
+//                        (packetType == 0xfe && packetLength == 5) ||
+//                        packetType == 0xff ||
+//                        packetType == 0xfb) {
+//                    resultSet = false;
+//                } else {
+//                    resultSet = true;
+//                }
+//            }
+//
+//            //===============================================================
+//            //===================读取columnsCount=============================
+//            //===============================================================
+//            long columnsCount = resultSet ? packetType & 0xff : 0;
+//            if (resultSet) {
+//                //读取第一个列定义的包长度
+//                temp.clear();
+//                temp.limit(packetLength);
+//                temp.put((byte) columnsCount);
+//                readNum = channel.read(temp);
+//                if (checkReadNum(readNum)) {
+//                    break;
+//                }
+//                columnsCount = tm.readLength();
+//            }
+//            //假设列定义的包平均长度为50，1.25为弹性系数
+//            //packetLength+4为第一个包的长度
+//            int bufferSize = (int) (packetLength + 4 + columnsCount * 50 * 1.25);
+//            //===============================================================
+//            //========================读取剩余信息=============================
+//            //===============================================================
+//            Chunk chunk = bufferPool.getChunk(bufferSize + 4);
+//            ByteBuffer buffer = chunk.getBuffer();
+//            int limit = buffer.limit();
+//            int position = buffer.position();
+//            if (limit - position > packetLength + 4) {
+//                int offset = (limit - position) - (packetLength + 4);
+//                chunk.getBuffer().limit(limit - offset);
+//            }
+//            BufferUtil.writeUB3(chunk.getBuffer(), packetLength);
+//
+//            readNum = channel.read(chunk.getBuffer());
+//            logger.debug("4.packetLength is " + packetLength + ",read packet body is " + readNum + ",chuck buffer size is " + chunk.getBuffer().capacity());
+//            if (readNum == 0) {
+//                break;
+//            }
+//            if (readNum == -1) {
+//                this.connection.getSocketChannel().socket().close();
+//                this.connection.getSocketChannel().close();
+//                selectionKey.cancel();
+//                break;
+//            }
+//            chunk.getBuffer().flip();
+//            chunks.add(chunk);
+//        }
+//        if (frontendHandler != null && !chunks.isEmpty()) {
+//            //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
+//            Chunk[] c = chunks.toArray(new Chunk[chunks.size()]);
+//            frontendHandler.writeData(c);
+//        }
+//    }
+//
+//    public boolean checkReadNum(int readNum) throws IOException {
+//        if (readNum == 0) {
+//            return true;
+//        }
+//        if (readNum == -1) {
+//            this.connection.getSocketChannel().socket().close();
+//            this.connection.getSocketChannel().close();
+//            selectionKey.cancel();
+//            return true;
+//        }
+//        return false;
+//    }
+
 
     public void setFrontendHandler(FrontendHandler frontendHandler) {
         this.frontendHandler = frontendHandler;
