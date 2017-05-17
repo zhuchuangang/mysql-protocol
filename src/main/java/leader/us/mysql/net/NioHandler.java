@@ -12,6 +12,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 /**
  * Created by zcg on 2017/5/2.
@@ -28,7 +29,7 @@ public abstract class NioHandler implements Runnable {
     //protected ByteBuffer writeBuffer;
     protected Chunk writeChunk;
 
-    private volatile LinkedList<Chunk> bufferQueue = new LinkedList<>();
+    private volatile LinkedList<Chunk[]> bufferQueue = new LinkedList<>();
 
     private AtomicBoolean writeFlag = new AtomicBoolean(false);
 
@@ -73,7 +74,7 @@ public abstract class NioHandler implements Runnable {
     }
 
 
-    public void writeData(Chunk chunk) throws IOException {
+    public void writeData(Chunk... chunk) throws IOException {
         while (!writeFlag.compareAndSet(false, true)) {
             //until the release
             //System.out.println("writeData:until the release");
@@ -93,27 +94,33 @@ public abstract class NioHandler implements Runnable {
     }
 
 
-    public void writeToChannel(Chunk chunk) throws IOException {
-        int writeNum = this.connection.getSocketChannel().write(chunk.getBuffer());
+    public void writeToChannel(Chunk... chunks) throws IOException {
+        ByteBuffer[] buffers = new ByteBuffer[chunks.length];
+        for (int i = 0; i < chunks.length; i++) {
+            buffers[i] = chunks[i].getBuffer();
+        }
+        long writeNum = this.connection.getSocketChannel().write(buffers);
         //System.out.println("write num:" + writeNum);
-        if (chunk.getBuffer().hasRemaining()) {
-            selectionKey.interestOps(SelectionKey.OP_WRITE);
-            this.selector.wakeup();
-            if (writeChunk != chunk) {
-                writeChunk = chunk;
-            } else {
-                bufferPool.recycleChunk(chunk);
-            }
-        } else {
-            //System.out.println("finish writing byteBuffer");
-            if (bufferQueue.isEmpty()) {
-                //System.out.println("bufferQueue is empty");
-                selectionKey.interestOps(SelectionKey.OP_READ);
+        for (Chunk chunk : chunks) {
+            if (chunk.getBuffer().hasRemaining()) {
+                selectionKey.interestOps(SelectionKey.OP_WRITE);
                 this.selector.wakeup();
+                if (writeChunk != chunk) {
+                    writeChunk = chunk;
+                } else {
+                    bufferPool.recycleChunk(chunk);
+                }
             } else {
-                //System.out.println("write bufferQueue");
-                Chunk curChunk = bufferQueue.removeFirst();
-                writeToChannel(curChunk);
+                //System.out.println("finish writing byteBuffer");
+                if (bufferQueue.isEmpty()) {
+                    //System.out.println("bufferQueue is empty");
+                    selectionKey.interestOps(SelectionKey.OP_READ);
+                    this.selector.wakeup();
+                } else {
+                    //System.out.println("write bufferQueue");
+                    Chunk[] curChunk = bufferQueue.removeFirst();
+                    writeToChannel(curChunk);
+                }
             }
         }
     }

@@ -9,9 +9,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -70,138 +73,208 @@ public class BackendHandler extends NioHandler {
 //        }
 //    }
 
-//    private volatile int packetLength = 0;
-//    private byte[] lengthByte;
-//
+
+    @Override
+    public void doReadData() throws IOException {
+        SocketChannel channel = this.connection.getSocketChannel();
+        ByteBuffer temp = ByteBuffer.allocate(3);
+        MySQLMessage tm = new MySQLMessage(temp);
+        int packetLength = 0;
+        List<Chunk> chunks = new ArrayList<>();
+        while (true) {
+            temp.clear();
+            int readNum = channel.read(temp);
+            logger.debug("1.read packet length byte is " + readNum);
+            if (readNum == 0) {
+                break;
+            }
+            if (readNum == -1) {
+                this.connection.getSocketChannel().socket().close();
+                this.connection.getSocketChannel().close();
+                selectionKey.cancel();
+                break;
+            }
+            temp.flip();
+            packetLength = tm.readUB3();
+            logger.debug("2.read packet length is " + packetLength);
+
+            Chunk chunk = bufferPool.getChunk(packetLength + 4);
+            ByteBuffer buffer = chunk.getBuffer();
+            int limit = buffer.limit();
+            int position = buffer.position();
+            if (limit - position > packetLength + 4) {
+                int offset = (limit - position) - (packetLength + 4);
+                chunk.getBuffer().limit(limit - offset);
+            }
+            BufferUtil.writeUB3(chunk.getBuffer(), packetLength);
+
+            readNum = channel.read(chunk.getBuffer());
+            logger.debug("4.packetLength is " + packetLength + ",read packet body is " + readNum + ",chuck buffer size is " + chunk.getBuffer().capacity());
+            if (readNum == 0) {
+                break;
+            }
+            if (readNum == -1) {
+                this.connection.getSocketChannel().socket().close();
+                this.connection.getSocketChannel().close();
+                selectionKey.cancel();
+                break;
+            }
+            chunk.getBuffer().flip();
+            chunks.add(chunk);
+        }
+        if (frontendHandler != null && !chunks.isEmpty()) {
+            //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
+            Chunk[] c = chunks.toArray(new Chunk[chunks.size()]);
+            frontendHandler.writeData(c);
+        }
+    }
+
 //    @Override
 //    public void doReadData() throws IOException {
 //        SocketChannel channel = this.connection.getSocketChannel();
-//        lengthByte = new byte[3];
-//        ByteBuffer b = ByteBuffer.wrap(lengthByte);
-//        if (packetLength == 0) {
-//            int readNum = channel.read(b);
-//            logger.debug("1.read packet length byte is " + readNum);
-//            if (readNum == 0) {
-//                return;
-//            }
-//            if (readNum == -1) {
-//                this.connection.getSocketChannel().socket().close();
-//                this.connection.getSocketChannel().close();
-//                selectionKey.cancel();
-//                return;
-//            }
-//            int length = lengthByte[0] & 0xff;
-//            length |= (lengthByte[1] & 0xff) << 8;
-//            length |= (lengthByte[2] & 0xff) << 16;
-//            packetLength = length;
-//            logger.debug("2.read packet length is " + packetLength);
+//        ByteBuffer temp = ByteBuffer.allocate(8 + 3);
+//        temp.limit(5);
+//        int readNum = channel.read(temp);
+//        temp.flip();
+//        logger.debug("read num is {}", readNum);
+//        if (readNum == 0) {
 //            return;
-//        } else {
-//            logger.debug("3.packetLength is " + packetLength);
-//            Chunk chunk = bufferPool.getChunk(packetLength + 4);
-//            BufferUtil.writeUB3(chunk.getBuffer(), packetLength);
-//            packetLength = 0;
+//        }
+//        if (readNum == 4) {
+//            return;
+//        }
+//        if (readNum == -1) {
+//            this.connection.getSocketChannel().socket().close();
+//            this.connection.getSocketChannel().close();
+//            selectionKey.cancel();
+//            return;
+//        }
+//        MySQLMessage tm = new MySQLMessage(temp);
+//        //包长度
+//        int packetLength = tm.readUB3();
+//        tm.move(1);
+//        //包类型
+//        byte packetType = tm.read();
+//        //动态buffer
+//        Chunk chunk = null;
+//        ByteBuffer buffer = null;
+//        //buffer的position和limit
+//        int position = 0;
+//        int limit = 0;
 //
-//            int readNum = channel.read(chunk.getBuffer());
-//            logger.debug("4.packetLength is " + packetLength + ",read packet body is " + readNum + ",chuck buffer size is " + chunk.getBuffer().capacity());
-//            if (readNum == 0) {
-//                return;
-//            }
-//            if (readNum == -1) {
-//                this.connection.getSocketChannel().socket().close();
-//                this.connection.getSocketChannel().close();
-//                selectionKey.cancel();
-//                return;
-//            }
+//        logger.debug("packet length is {}", packetLength);
 //
-//            chunk.getBuffer().flip();
+//        switch (packetType) {
+//            //OK packet
+//            case 0x00:
+//                //LOCAL_INFILE packet
+//            case (byte) 0xfb:
+//                //EOF packet
+//            case (byte) 0xfe:
+//                //ERROR packet
+//            case (byte) 0xff:
+//                chunk = bufferPool.getChunk(packetLength + 4);
+//                buffer = chunk.getBuffer();
+//                limit = buffer.limit();
+//                position = buffer.position();
+//                if (limit - position > packetLength + 4) {
+//                    int offset = (limit - position) - (packetLength + 4);
+//                    chunk.getBuffer().limit(limit - offset);
+//                }
+//                BufferUtil.writeUB3(buffer, packetLength);
+//                buffer.put(temp.get(3));
+//                buffer.put(packetType);
+//                channel.read(buffer);
+//                break;
+//            //ResultSet
+//            default:
+//                //获取字段个数
+//                long columnsNumber = packetType & 0xff;
+//                temp.clear();
+//                switch ((int) columnsNumber) {
+//                    case 251:
+//                        columnsNumber = -1;
+//                    case 252:
+//                        temp.limit(2);
+//                        channel.read(temp);
+//                        temp.flip();
+//                        columnsNumber = tm.readUB2();
+//                        break;
+//                    case 253:
+//                        temp.limit(3);
+//                        channel.read(temp);
+//                        temp.flip();
+//                        columnsNumber = tm.readUB3();
+//                        break;
+//                    case 254:
+//                        temp.limit(8);
+//                        channel.read(temp);
+//                        temp.flip();
+//                        columnsNumber = tm.readLength();
+//                        break;
+//                }
+//                //读取第一个列定义的包长度
+//                int p = temp.position();
+//                temp.limit(temp.limit() + 3);
+//                channel.read(temp);
+//                temp.position(p);
+//                int cdPacketLength = tm.readUB3();
+//                //以第一个列定义估算所有列定义的长度
+//                int cdSize = (int) (columnsNumber * (cdPacketLength + 4) * 1.25);
+//                chunk = bufferPool.getChunk(4 + 1 + p + cdSize);
+//                buffer = chunk.getBuffer();
+//                //写入第一个报文
+//                BufferUtil.writeUB3(buffer, packetLength);
+//                buffer.put(temp.get(3));
+//                buffer.put(packetType);
+//                BufferUtil.writeLength(buffer, columnsNumber);
+//                //读取后续报文
+//                int capacity = buffer.capacity();
+//
+//                for (int i = 0; i < columnsNumber; i++) {
+//                    if (i == 0) {
+//                        //写入第二报文的长度(第一个列定义)
+//                        buffer.limit(cdPacketLength + 4);
+//                        BufferUtil.writeUB3(buffer, cdPacketLength);
+//                        channel.read(buffer);
+//                    } else {
+//                        temp.clear();
+//                        temp.limit(3);
+//                        channel.read(temp);
+//                        cdPacketLength = tm.readUB3();
+//                        buffer.limit(cdPacketLength + 4);
+//                        BufferUtil.writeUB3(buffer, cdPacketLength);
+//                        channel.read(buffer);
+//                    }
+//                }
+//        }
+//
+//        //=====================
+//        StringBuffer sb = new StringBuffer("\n");
+//        for (int i = position; i < chunk.getBuffer().limit(); i++) {
+//            String t = Integer.toHexString(chunk.getBuffer().get(i) & 0xff);
+//            if (t.length() == 1) {
+//                t = "0" + t;
+//            }
+//            sb.append(t + " ");
+//            if ((i + 1) % 8 == 0) {
+//                sb.append(" ");
+//            }
+//            if ((i + 1) % 16 == 0) {
+//                sb.append("\n");
+//            }
+//        }
+//        logger.debug(sb.toString());
+//        //=====================
+//
+//        if (chunk != null) {
+//            chunk.getBuffer().position(position);
 //            if (frontendHandler != null) {
 //                //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
 //                frontendHandler.writeData(chunk);
 //            }
 //        }
 //    }
-
-    @Override
-    public void doReadData() throws IOException {
-        SocketChannel channel = this.connection.getSocketChannel();
-        byte[] lengthByte = new byte[5];
-        ByteBuffer lbb = ByteBuffer.wrap(lengthByte);
-        int readNum = channel.read(lbb);
-        logger.debug("read num is {}", readNum);
-        if (readNum == 0) {
-            return;
-        }
-        if (readNum == -1) {
-            this.connection.getSocketChannel().socket().close();
-            this.connection.getSocketChannel().close();
-            selectionKey.cancel();
-            return;
-        }
-        int packetLength = lengthByte[0] & 0xff;
-        packetLength |= (lengthByte[1] & 0xff) << 8;
-        packetLength |= (lengthByte[2] & 0xff) << 16;
-        int packetType = lengthByte[4] & 0xff;
-
-        Chunk chunk = null;
-        logger.debug("packet length is {}", packetLength);
-        chunk = bufferPool.getChunk(packetLength + 4);
-        int limit = chunk.getBuffer().limit();
-        int position = chunk.getBuffer().position();
-        if (limit - position > packetLength + 4) {
-            int offset = (limit - position) - (packetLength + 4);
-            chunk.getBuffer().limit(limit-offset);
-        }
-        chunk.getBuffer().put(lengthByte);
-        channel.read(chunk.getBuffer());
-
-        //=====================
-        StringBuffer sb = new StringBuffer("\n");
-        for (int i = position; i < chunk.getBuffer().limit(); i++) {
-            String t = Integer.toHexString(chunk.getBuffer().get(i) & 0xff);
-            if (t.length() == 1) {
-                t = "0" + t;
-            }
-            sb.append(t + " ");
-            if ((i + 1) % 8 == 0) {
-                sb.append(" ");
-            }
-            if ((i + 1) % 16 == 0) {
-                sb.append("\n");
-            }
-        }
-        logger.debug(sb.toString());
-        //=====================
-
-//        switch (packetType) {
-//            //OK packet
-//            case 0x00:
-//                //LOCAL_INFILE packet
-//            case 0xfb:
-//                //EOF packet
-//            case 0xfe:
-//                //ERROR packet
-//            case 0xff:
-//                chunk = bufferPool.getChunk(packetLength + 4);
-//                chunk.getBuffer().put(lengthByte);
-//                channel.read(chunk.getBuffer());
-//                break;
-//            //ResultSet
-//            default:
-//                int length = lengthByte[4] & 0xff;
-//                MySQLMessage m = new MySQLMessage(chunk.getBuffer());
-//                m.move(4);
-//                long columnsNumber = m.readLength();
-//        }
-
-        if (chunk != null) {
-            chunk.getBuffer().position(position);
-            if (frontendHandler != null) {
-                //MysqlResponseHandler.dump(chunk.getBuffer(), frontendHandler);
-                frontendHandler.writeData(chunk);
-            }
-        }
-    }
 
     public void setFrontendHandler(FrontendHandler frontendHandler) {
         this.frontendHandler = frontendHandler;
