@@ -20,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
  * Created by zcg on 2017/5/4.
  */
 public class FakeLoginAuthenticationHandler implements SqlCommandHandler {
+
     private static Logger logger = LogManager.getLogger(FakeLoginAuthenticationHandler.class);
     private DirectByteBufferPool bufferPool;
 
@@ -27,6 +28,7 @@ public class FakeLoginAuthenticationHandler implements SqlCommandHandler {
         this.bufferPool = bufferPool;
     }
 
+    @Override
     public Chunk response(Chunk chunk, SocketChannel socketChannel, FrontendHandler handler) {
         AuthPacket ap = new AuthPacket();
         ap.read(chunk.getBuffer());
@@ -45,23 +47,25 @@ public class FakeLoginAuthenticationHandler implements SqlCommandHandler {
             System.arraycopy(handshake.authPluginDataPart2, 0, seed, len1, len2);
             String serverEncryptedPassword = null;
             try {
-                serverEncryptedPassword = new String(SecurityUtil.scramble411(server.getPassword().getBytes(), seed));
+                serverEncryptedPassword = new String(
+                        SecurityUtil.scramble411(server.getPassword().getBytes(), seed));
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
+                logger.error(e);
             }
             String clientEncryptedPassword = new String(ap.password);
             if (clientEncryptedPassword.equals(serverEncryptedPassword)) {
                 success = true;
             }
         }
+        Chunk temp;
         if (success) {
             OKPacket op = new OKPacket();
             op.packetSequenceId = 2;
             op.capabilities = FakeMysqlServer.getFakeServerCapabilities();
             op.statusFlags = StatusFlags.SERVER_STATUS_AUTOCOMMIT.getCode();
-            chunk = bufferPool.getChunk(op.calcPacketSize() + 4);
-            op.write(chunk.getBuffer());
-            chunk.getBuffer().flip();
+            temp = bufferPool.getChunk(op.calcPacketSize() + 4);
+            op.write(temp.getBuffer());
+            temp.getBuffer().flip();
             if (logger.isDebugEnabled()) {
                 logger.debug("login authentication success,server response client ok packet:{}", op);
             }
@@ -76,16 +80,17 @@ public class FakeLoginAuthenticationHandler implements SqlCommandHandler {
             try {
                 address = socketChannel.getLocalAddress().toString();
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error(e);
             }
-            ep.errorMessage = "Access denied for user '" + ap.username + "'@'" + address + "' (using password: YES)";
-            chunk = bufferPool.getChunk(ep.calcPacketSize() + 4);
-            ep.write(chunk.getBuffer());
-            chunk.getBuffer().flip();
+            ep.errorMessage =
+                    "Access denied for user '" + ap.username + "'@'" + address + "' (using password: YES)";
+            temp = bufferPool.getChunk(ep.calcPacketSize() + 4);
+            ep.write(temp.getBuffer());
+            temp.getBuffer().flip();
             if (logger.isDebugEnabled()) {
                 logger.debug("login authentication error,server response client error packet:{}", ep);
             }
         }
-        return chunk;
+        return temp;
     }
 }

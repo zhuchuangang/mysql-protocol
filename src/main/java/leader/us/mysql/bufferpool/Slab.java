@@ -58,6 +58,7 @@ public class Slab implements Comparable<Slab> {
     public void recycleChunk(Chunk chunk) {
 //        System.out.println("recycle chunk index is " + chunk.getChunkIndex());
 //        System.out.println("begin recycle");
+        chunk.getBuffer().clear();
         this.usageState.clear(chunk.getChunkIndex());
 //        System.out.println("get usageState index " + chunk.getChunkIndex() + " value is " + this.usageState.get(chunk.getChunkIndex()));
 //        System.out.println("end recycle");
@@ -73,5 +74,14 @@ public class Slab implements Comparable<Slab> {
         if (pages == null) {
             this.chunkSize = chunkSize;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Slab{" +
+                "chunkSize=" + chunkSize +
+                ", pages=" + pages +
+                ", usageState=" + usageState +
+                '}';
     }
 }

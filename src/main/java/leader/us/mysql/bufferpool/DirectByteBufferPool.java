@@ -47,4 +47,11 @@ public class DirectByteBufferPool {
         Slab slab = slabClass.ceiling(temp);
         slab.recycleChunk(chunk);
     }
+
+    @Override
+    public String toString() {
+        return "DirectByteBufferPool{" +
+                "slabClass=" + slabClass +
+                '}';
+    }
 }
